@@ -34,7 +34,7 @@ stream.close()
 audio.terminate()
 
 # save wav file
-waveFile = wave.open(audio.wav, 'wb')
+waveFile = wave.open("audio.wav", 'wb')
 waveFile.setnchannels(CHANNELS)
 waveFile.setsampwidth(audio.get_sample_size(FORMAT))
 waveFile.setframerate(RATE)
@@ -58,12 +58,12 @@ s2.plot(leftStream)
 fig2.savefig('left.png')
 
 # find the point of maximum correlation
-# we keep one of the left stream as-is while ofsetting the right stream by some number of indecies
-indeciesToCheck = math.ceil((MIC_SEPARATION / SPEED_OF_SOUND) * RATE * 1.1) # we multiply by 1.1 as a saftey factor
+# we keep one of the left stream as-is while offsetting the right stream by some number of indices
+indicesToCheck = math.ceil((MIC_SEPARATION / SPEED_OF_SOUND) * RATE * 1.1) # we multiply by 1.1 as a safety factor
 maxCorr = -999999
 maxCorrIndex = -999999
 correlationValues = []
-for i in range(-indeciesToCheck, indeciesToCheck):
+for i in range(-indicesToCheck, indicesToCheck):
     thisCorr = np.corrcoef(leftStream, np.roll(rightStream, i), 'valid')[0][1]
     correlationValues.append(thisCorr)
     if (thisCorr > maxCorr):
@@ -73,7 +73,7 @@ for i in range(-indeciesToCheck, indeciesToCheck):
 # plot the correlation values
 fig5 = plt.figure()
 s5 = fig5.add_subplot(111)
-s5.plot(range(-indeciesToCheck, indeciesToCheck), correlationValues)
+s5.plot(range(-indicesToCheck, indicesToCheck), correlationValues)
 fig5.savefig('correlation-values.png')
 
 # compute and print angle
