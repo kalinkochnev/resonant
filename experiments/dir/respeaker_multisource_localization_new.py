@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pyaudio
 import math
+import itertools
 from scipy.signal import argrelmax
 from scipy.signal import savgol_filter
 import wave
@@ -44,10 +45,9 @@ audio.terminate()
 # waveFile.close()
 
 amplitude = np.frombuffer(frames, np.int16)
-sig1 = amplitude[::4]
-sig2 = amplitude[1::4]
-sig3 = amplitude[2::4]
-sig4 = amplitude[3::4]
+sig = []
+for i in range(CHANNELS):
+    sig.append(amplitude[i::CHANNELS])
 
 # angles are weird, so if I'm not wrong, they need to be computed differently for each quadrent
 # of course, I think there's still a better way to do this
@@ -106,33 +106,45 @@ def getOffsets(a):
     return [o1,o2,o3,o4]
 
 correlationValues = []
+allCorrs = []
 for i in range(0,361, 5):
-    offsets = getOffsets(i)
-    rsig1 = np.roll(sig1, offsets[0])
-    rsig2 = np.roll(sig2, offsets[1])
-    rsig3 = np.roll(sig3, offsets[2])
-    rsig4 = np.roll(sig4, offsets[3])
-    # if (i == 90):
-    #     scipy.io.wavfile.write("mic1.wav", RATE, np.array(rsig1).astype(np.int16))
-    #     scipy.io.wavfile.write("mic2.wav", RATE, np.array(rsig2).astype(np.int16))
-    #     scipy.io.wavfile.write("mic3.wav", RATE, np.array(rsig3).astype(np.int16))
-    #     scipy.io.wavfile.write("mic4.wav", RATE, np.array(rsig4).astype(np.int16))
     print(i, end='\r')
-    c1= np.corrcoef(rsig1, rsig2, 'valid')[1,0]
-    c2= np.corrcoef(rsig1, rsig3, 'valid')[1,0]
-    c3= np.corrcoef(rsig1, rsig4, 'valid')[1,0]
-    c4= np.corrcoef(rsig2, rsig3, 'valid')[1,0]
-    c5= np.corrcoef(rsig2, rsig4, 'valid')[1,0]
-    c6= np.corrcoef(rsig3, rsig4, 'valid')[1,0]
+    
+    offsets = getOffsets(i)
+    rsig = []
+    for j in range(len(sig)):
+        rsig.append(np.roll(sig[j], offsets[j]))
 
-    correlation = c1**2+c2**2+c3**2+c4**2+c5**2+c6**2
+    correlation = 1
+    allCorr = [i]
+    for j in itertools.combinations(range(CHANNELS), 2):
+        x, y = j
+        c = np.corrcoef(rsig[x], rsig[y], 'valid')[1,0]
+        # c = np.corrcoef(rsig[x], rsig[y], 'valid')[1,0] / (np.std(rsig[x]) * np.std(rsig[y]))
+        correlation *= c
+        allCorr.append(c)
 
-    correlationValues.append([correlation/np.std([c1,c2,c3,c4,c5,c6]), i])
+    correlationValues.append([correlation, i, ])
+    allCorrs.append(allCorr)
+
+fig1 = plt.figure()
+s1 = fig1.add_subplot(111, projection='polar')
+s1.plot(np.array(correlationValues)[:,1]*(math.pi/180), np.array(correlationValues)[:,0])
+fig1.savefig('correlation-computed.png')
+
+print(allCorrs)
 
 fig = plt.figure()
 s = fig.add_subplot(111, projection='polar')
-s.plot(np.array(correlationValues)[:,1]*(math.pi/180), np.array(correlationValues)[:,0])
+s.plot(np.array(allCorrs)[:,0]*(math.pi/180), np.array(allCorrs)[:,1])
+s.plot(np.array(allCorrs)[:,0]*(math.pi/180), np.array(allCorrs)[:,2])
+s.plot(np.array(allCorrs)[:,0]*(math.pi/180), np.array(allCorrs)[:,3])
+s.plot(np.array(allCorrs)[:,0]*(math.pi/180), np.array(allCorrs)[:,4])
+s.plot(np.array(allCorrs)[:,0]*(math.pi/180), np.array(allCorrs)[:,5])
+s.plot(np.array(allCorrs)[:,0]*(math.pi/180), np.array(allCorrs)[:,6])
 fig.savefig('correlations.png')
+
+
 
 correlationValues = sorted(correlationValues, key=lambda x: x[0])
 print (correlationValues)
