@@ -5,7 +5,7 @@ from typing import List
 
 V_SOUND = 338  # speed of sound
 NUM_SLICES = 20  # of slices to divide circle into
-MIC_SPACING = 0.062 /2 # meters
+MIC_SPACING = 0.062 / 2  # meters
 NUM_MICS = 4
 SAMPLING_RATE = 348000  # of samples taken per second for each track
 
@@ -36,6 +36,9 @@ class SphericalPt:
 
         return (x, y, z)
 
+    def __eq__(self, pt: 'SphericalPt'):
+        return (self.radius == pt.radius) and (self.polar == pt.polar) and (self.azimuth == pt.azimuth)
+
 
 class Mic:
     def __init__(self, audio: np.ndarray, position: SphericalPt):
@@ -54,9 +57,11 @@ class Mic:
 
         # This initializes mic objects with their channel and position
         for mic_index in range(0, NUM_MICS):
-            angle_from_center = math.pi/4 + mic_index * \
+            mic_1_angle = 5 * math.pi / 4
+            angle_from_center = mic_1_angle + mic_index * \
                 math.pi/2  # Generates angle for corner of square
-            mic_pt = SphericalPt(MIC_SPACING/ 2 * math.sqrt(2), angle_from_center, 0)
+            mic_pt = SphericalPt(
+                MIC_SPACING / 2 * math.sqrt(2), angle_from_center, 0)
 
             channel = recording[mic_index::NUM_MICS]
             microphones.append(Mic(np.array(channel), mic_pt))
@@ -70,17 +75,18 @@ class Mic:
         self.audio_shift += round(seconds *
                                   SAMPLING_RATE)  # of samples in that span of time
 
-        shifted = np.empty_like(self.audio)
-        if self.audio_shift > 0:
-            shifted[:self.audio_shift] = fill_value
-            shifted[self.audio_shift:] = self.audio[:-self.audio_shift]
-        elif self.audio_shift < 0:
-            shifted[self.audio_shift:] = fill_value
-            shifted[:self.audio_shift] = self.audio[-self.audio_shift:]
-        else:
-            shifted[:] = self.audio
-        # self.audio = np.roll(self.audio, self.audio_shift)
-        self.audio = shifted
+        # shifted = np.empty_like(self.audio)
+        # if self.audio_shift > 0:
+        #     shifted[:self.audio_shift] = fill_value
+        #     shifted[self.audio_shift:] = self.audio[:-self.audio_shift]
+        # elif self.audio_shift < 0:
+        #     shifted[self.audio_shift:] = fill_value
+        #     shifted[:self.audio_shift] = self.audio[-self.audio_shift:]
+        # else:
+        #     shifted[:] = self.audio
+        self.audio = np.roll(self.audio, self.audio_shift)
+        print(f'audio shifted {self.audio_shift} indices ', flush=True)
+        # self.audio = shifted
 
     def reset_shift(self):
         self.audio = self.original_audio
@@ -103,10 +109,19 @@ class Mic:
         return np.corrcoef(a.audio, b.audio, 'valid')[0][1]
 
 
-if __name__ == "__main__":
-    file = 'experiments/respeaker_test_data/street_sounds_135_speech_270/combined.wav'
-    print(f"Using file {file}")
+def export_tracks(microphones):
     microphones = Mic.from_recording(4, file)
+
+    source = SphericalPt(1, math.pi, 0)
+    for mic_index in range(len(microphones)):
+        mic = microphones[mic_index]
+        delay = mic.delay_from_source(source)
+        mic.shift_audio(delay)
+        wav.write(
+            f'experiments/test_audio/track{mic_index}.wav', SAMPLING_RATE, mic.audio)
+
+
+def algorithm(microphones):
 
     # For each azimuth/height in a circle, loop through points of a circle.
     # Azimuth accounts for "changing" radius of a circle throughout a sphere
@@ -120,8 +135,9 @@ if __name__ == "__main__":
             # print(f"Calculating... {src_pt}")
 
             # Calc delays and subtract min from all shifts b/c it's as if it hits that mic first
-            audio_shifts: np.ndarray = np.array([mic.delay_from_source(src_pt) for mic in microphones])
-            
+            audio_shifts: np.ndarray = np.array(
+                [mic.delay_from_source(src_pt) for mic in microphones])
+
             # https://stackoverflow.com/questions/35215161/most-efficient-way-to-map-function-over-numpy-array
             audio_shifts -= audio_shifts.min()
             min_shift_index = audio_shifts.tolist().index(0)
@@ -157,7 +173,6 @@ if __name__ == "__main__":
     from mpl_toolkits.mplot3d import Axes3D
     from matplotlib import cm, colors
     import matplotlib.pyplot as plt
-    import numpy as np
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -165,3 +180,12 @@ if __name__ == "__main__":
     ax.scatter(x, y, z)
 
     plt.show()
+
+
+def main():
+    file = 'experiments/respeaker_test_data/speech_270/combined.wav'
+    print(f"Using file {file}")
+    microphones = Mic.from_recording(4, file)
+    algorithm(microphones)
+
+# if __name__ == "__main__":
