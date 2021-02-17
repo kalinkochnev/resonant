@@ -36,7 +36,7 @@ class SphericalPt:
 
         return (x, y, z)
 
-    def __eq__(self, pt: 'SphericalPt'):
+    def __eq__(self, pt):
         return (self.radius == pt.radius) and (self.polar == pt.polar) and (self.azimuth == pt.azimuth)
 
 
@@ -75,18 +75,17 @@ class Mic:
         self.audio_shift += round(seconds *
                                   SAMPLING_RATE)  # of samples in that span of time
 
-        # shifted = np.empty_like(self.audio)
-        # if self.audio_shift > 0:
-        #     shifted[:self.audio_shift] = fill_value
-        #     shifted[self.audio_shift:] = self.audio[:-self.audio_shift]
-        # elif self.audio_shift < 0:
-        #     shifted[self.audio_shift:] = fill_value
-        #     shifted[:self.audio_shift] = self.audio[-self.audio_shift:]
-        # else:
-        #     shifted[:] = self.audio
-        self.audio = np.roll(self.audio, self.audio_shift)
-        print(f'audio shifted {self.audio_shift} indices ', flush=True)
-        # self.audio = shifted
+        shifted = np.empty_like(self.audio)
+        if self.audio_shift > 0:
+            shifted[:self.audio_shift] = fill_value
+            shifted[self.audio_shift:] = self.audio[:-self.audio_shift]
+        elif self.audio_shift < 0:
+            shifted[self.audio_shift:] = fill_value
+            shifted[:self.audio_shift] = self.audio[-self.audio_shift:]
+        else:
+            shifted[:] = self.audio
+        # self.audio = np.roll(self.audio, self.audio_shift)
+        self.audio = shifted
 
     def reset_shift(self):
         self.audio = self.original_audio
@@ -97,11 +96,14 @@ class Mic:
         with an angle relative to the center of the microphones. Uses spherical coordinates
         Returns: delay in seconds
 
-        Wolfram input: limit ( sqrt((s)^2 + (m)^2 - 2(s)(m)(sin(a)sin(b)cos(c-d)) +  cos(a)cos(b)    ) - s ) s-> infinity
+        limit ( s - sqrt((s)^2 + (m)^2 - 2(s)(m)(sin(a)sin(b)cos((pi/2-c)-(pi/2-d)) +  cos(a)cos(b)   ) ) ) s-> infinity        
         """
         mic_pos = self.position
         diff_in_azimuth = source.azimuth - mic_pos.azimuth
-        return -mic_pos.radius * math.cos(diff_in_azimuth) * math.sin(source.polar) * math.sin(mic_pos.polar) / V_SOUND
+        if diff_in_azimuth == 0: # Hopefully optimized when azimuth is 0
+            return mic_pos.radius * math.cos(source.polar - mic_pos.polar) / V_SOUND
+        else:
+            return mic_pos.radius * (math.cos(source.polar) * math.cos(mic_pos.polar) + math.cos(diff_in_azimuth) * math.sin(source.polar) * math.sin(mic_pos.polar)) / V_SOUND
 
     @classmethod
     def correlate(cls, a: 'Mic', b: 'Mic'):
@@ -183,9 +185,10 @@ def algorithm(microphones):
 
 
 def main():
-    file = 'experiments/respeaker_test_data/speech_270/combined.wav'
+    file = 'data/dog_barking_90_speech_270/combined.wav'
     print(f"Using file {file}")
     microphones = Mic.from_recording(4, file)
     algorithm(microphones)
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
+    main()
