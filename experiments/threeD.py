@@ -5,7 +5,7 @@ from typing import List
 
 V_SOUND = 338  # speed of sound
 NUM_SLICES = 20  # of slices to divide circle into
-MIC_SPACING = 0.062 / 2  # meters
+MIC_SPACING = 0.062  # meters
 NUM_MICS = 4
 SAMPLING_RATE = 348000  # of samples taken per second for each track
 
@@ -57,11 +57,10 @@ class Mic:
 
         # This initializes mic objects with their channel and position
         for mic_index in range(0, NUM_MICS):
-            mic_1_angle = 5 * math.pi / 4
-            angle_from_center = mic_1_angle + mic_index * \
-                math.pi/2  # Generates angle for corner of square
+            # Generates angle for corner of square
+            mic_angle = ((2 * -mic_index + 5) % 8) * math.pi / 4
             mic_pt = SphericalPt(
-                MIC_SPACING / 2 * math.sqrt(2), angle_from_center, 0)
+                MIC_SPACING / 2 * math.sqrt(2), mic_angle, 0)
 
             channel = recording[mic_index::NUM_MICS]
             microphones.append(Mic(np.array(channel), mic_pt))
@@ -112,19 +111,17 @@ class Mic:
 
 
 def export_tracks(microphones):
-    microphones = Mic.from_recording(4, file)
 
-    source = SphericalPt(1, math.pi, 0)
+    source = SphericalPt(1, math.pi/2, 0)
     for mic_index in range(len(microphones)):
         mic = microphones[mic_index]
         delay = mic.delay_from_source(source)
-        mic.shift_audio(delay)
+        mic.shift_audio(-delay)
         wav.write(
             f'experiments/test_audio/track{mic_index}.wav', SAMPLING_RATE, mic.audio)
 
 
 def algorithm(microphones):
-
     # For each azimuth/height in a circle, loop through points of a circle.
     # Azimuth accounts for "changing" radius of a circle throughout a sphere
 
@@ -158,9 +155,11 @@ def algorithm(microphones):
             assert len(less_mics) == 3
             for mic in less_mics:
                 correlation = Mic.correlate(initial_mic, mic)
-                if correlation < 0:
-                    correlation = 0
+                # if correlation < 0:
+                    # correlation = 0
                 avg_correlation += correlation / NUM_MICS
+
+            avg_correlation = avg_correlation**2
 
             # Set the radius = to the avg correlation for easier graphing
             src_pt.radius = avg_correlation
@@ -185,10 +184,12 @@ def algorithm(microphones):
 
 
 def main():
-    file = 'data/dog_barking_90_speech_270/combined.wav'
+    file = 'data/dog_barking_90/combined.wav'
     print(f"Using file {file}")
     microphones = Mic.from_recording(4, file)
+    # export_tracks(microphones)
     algorithm(microphones)
-
+    # for i in range(len(microphones)):
+        # print(f"Mic {i + 1}: {microphones[i].position.to_cartesian()}")
 if __name__ == "__main__":
     main()
