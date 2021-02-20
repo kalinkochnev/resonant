@@ -1,7 +1,7 @@
 import math
 import scipy.io.wavfile as wav
 import numpy as np
-from typing import List
+from typing import List, Tuple
 
 V_SOUND = 338  # speed of sound
 NUM_SLICES = 20  # of slices to divide circle into
@@ -67,6 +67,15 @@ class Mic:
 
         return microphones
 
+    @classmethod
+    def get_pairs(cls, microphones: List['Mic']) -> List[Tuple['Mic', 'Mic']]:
+        # Assumes every other microphone is a "pair"
+        evens = microphones[::2]
+        odds = microphones[1::2]
+        # https://stackoverflow.com/questions/1624883/alternative-way-to-split-a-list-into-groups-of-n
+        def grouper(arr, group_size): return zip(*(iter(arr),) * group_size)
+        return [*grouper(evens, 2), *grouper(odds, 2)]
+
     def shift_audio(self, seconds, fill_value=0) -> None:
         # TODO I assign a filler value of 0, which may skew the correlation. Room for improvement
         """Preallocates empty array and inserts previous array # of indices left or right
@@ -99,7 +108,7 @@ class Mic:
         """
         mic_pos = self.position
         diff_in_azimuth = source.azimuth - mic_pos.azimuth
-        if diff_in_azimuth == 0: # Hopefully optimized when azimuth is 0
+        if diff_in_azimuth == 0:  # Hopefully optimized when azimuth is 0
             return mic_pos.radius * math.cos(source.polar - mic_pos.polar) / V_SOUND
         else:
             return mic_pos.radius * (math.cos(source.polar) * math.cos(mic_pos.polar) + math.cos(diff_in_azimuth) * math.sin(source.polar) * math.sin(mic_pos.polar)) / V_SOUND
@@ -133,33 +142,13 @@ def algorithm(microphones):
             src_pt = SphericalPt(0, polar, azimuth)
             # print(f"Calculating... {src_pt}")
 
-            # Calc delays and subtract min from all shifts b/c it's as if it hits that mic first
-            audio_shifts: np.ndarray = np.array(
-                [mic.delay_from_source(src_pt) for mic in microphones])
-
-            # https://stackoverflow.com/questions/35215161/most-efficient-way-to-map-function-over-numpy-array
-            audio_shifts -= audio_shifts.min()
-            min_shift_index = audio_shifts.tolist().index(0)
-
-            # Shift audios
-            for mic_index in range(len(microphones)):
-                mic = microphones[mic_index]
-                shift = audio_shifts[mic_index]
-                mic.shift_audio(shift)
-
-            # Correlate microphones to "initial" mic. Remove that mic from mic array
-            less_mics = microphones.copy()
-            initial_mic = less_mics.pop(min_shift_index)
-
+            # Calculate shifts
             avg_correlation = 0
-            assert len(less_mics) == 3
-            for mic in less_mics:
-                correlation = Mic.correlate(initial_mic, mic)
-                # if correlation < 0:
-                    # correlation = 0
-                avg_correlation += correlation / NUM_MICS
+            for m1, m2 in Mic.get_pairs(microphones):
+                m1.shift_audio(m1.delay_from_source(src_pt))
+                m2.shift_audio(m2.delay_from_source(src_pt))
 
-            avg_correlation = avg_correlation**2
+                avg_correlation += abs(Mic.correlate(m1, m2)) / (NUM_MICS / 2)
 
             # Set the radius = to the avg correlation for easier graphing
             src_pt.radius = avg_correlation
@@ -189,7 +178,11 @@ def main():
     microphones = Mic.from_recording(4, file)
     # export_tracks(microphones)
     algorithm(microphones)
+
+
     # for i in range(len(microphones)):
-        # print(f"Mic {i + 1}: {microphones[i].position.to_cartesian()}")
+    # print(f"Mic {i + 1}: {microphones[i].position.to_cartesian()}")
+
+
 if __name__ == "__main__":
     main()
