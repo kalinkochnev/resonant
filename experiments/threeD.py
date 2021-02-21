@@ -1,7 +1,18 @@
+from typing import List, Tuple
+import gif
+import matplotlib.pyplot as plt
 import math
 import scipy.io.wavfile as wav
 import numpy as np
-from typing import List, Tuple
+from numpy.fft import fft, ifft, fft2, ifft2, fftshift
+import timeit
+
+def fft_crosscorr(x, y):
+    f1 = fft(x)
+    f2 = fft(np.flipud(y))
+    cc = np.real(ifft(f1 * f2))
+    return fftshift(cc)
+
 
 V_SOUND = 338  # speed of sound
 NUM_SLICES = 20  # of slices to divide circle into
@@ -116,7 +127,10 @@ class Mic:
     @classmethod
     def correlate(cls, a: 'Mic', b: 'Mic'):
         # Has to retrieve value from 2x2 matrix
-        return np.corrcoef(a.audio, b.audio, 'valid')[0][1]
+        # https://lexfridman.com/fast-cross-correlation-and-time-series-synchronization-in-python/
+        corr = fft_crosscorr(a.audio, b.audio)
+        print(len(corr))
+        return corr
 
 
 def export_tracks(microphones):
@@ -130,11 +144,26 @@ def export_tracks(microphones):
             f'experiments/test_audio/track{mic_index}.wav', SAMPLING_RATE, mic.audio)
 
 
+sound_frames = []
+
+
+@gif.frame
+def plot_sounds(mic1, mic2):
+    print("Plotted frame")
+    # plt.plot(sound1 + sound2, label="sum")
+    # plt.plot(sound1, label="sound1")
+    plt.plot(mic1.audio - mic2.audio, label="diff")
+    plt.plot(mic1.original_audio, label="orig")
+    plt.legend(loc="upper left")
+    plt.ylim([-11000, 11000])
+
+
 def algorithm(microphones):
     # For each azimuth/height in a circle, loop through points of a circle.
     # Azimuth accounts for "changing" radius of a circle throughout a sphere
 
     correlated_pts: List[SphericalPt] = []
+    correlations = fft_crosscorr(a.audio, b.audio)
     for azimuth in np.linspace(0, math.pi/2, num=NUM_SLICES):
         print(azimuth)
         # angle relative to circle/polar
@@ -144,14 +173,17 @@ def algorithm(microphones):
 
             # Calculate shifts
             avg_correlation = 0
+            # p1 = ()
             for m1, m2 in Mic.get_pairs(microphones):
                 m1.shift_audio(m1.delay_from_source(src_pt))
                 m2.shift_audio(m2.delay_from_source(src_pt))
+                # p1 = (m1, m2)
+                # sound_frames.append(plot_sounds(p1[0], p1[1]))
                 corr = Mic.correlate(m1, m2)
-                
+
                 avg_correlation += corr / (NUM_MICS / 2)
             # Set the radius = to the avg correlation for easier graphing
-            src_pt.radius = avg_correlation
+            src_pt.radius = avg_correlation**2
             correlated_pts.append(src_pt)
 
             # Reset the shifts of the microphone
@@ -162,17 +194,33 @@ def algorithm(microphones):
     x, y, z = zip(*[pt.to_cartesian() for pt in correlated_pts])
     from mpl_toolkits.mplot3d import Axes3D
     from matplotlib import cm, colors
-    import matplotlib.pyplot as plt
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
     ax.scatter(x, y, z)
+    plt.show()
 
-    
-    # ax.scatter()
+
+def plot_fft_corr(microphones):
+    print("start")
+    interval = 1000
+    start = round(1.5 * SAMPLING_RATE)
+    end = round(2.2 * SAMPLING_RATE)
+    for i in range(start, end, interval):
+        a = True
+        for m1, m2 in Mic.get_pairs(microphones):
+            if a is True:
+                plt.plot(fft_crosscorr(m1.audio[i:i + interval], m2.audio[i:i + interval]), color="green")
+            else:
+                pass
+                # plt.plot(fft_crosscorr(m1.audio[i:i + interval], m2.audio[i:i + interval]), color="red")
+
+            a = not a
 
     plt.show()
+    print("stop")
+    
 
 
 def main():
@@ -180,12 +228,12 @@ def main():
     print(f"Using file {file}")
     microphones = Mic.from_recording(4, file)
     # export_tracks(microphones)
-    algorithm(microphones)
+    # algorithm(microphones)
+    plot_fft_corr(microphones)
 
-
-    # for i in range(len(microphones)):
-    # print(f"Mic {i + 1}: {microphones[i].position.to_cartesian()}")
 
 
 if __name__ == "__main__":
     main()
+    # https://github.com/maxhumber/gif
+    # gif.save(sound_frames, 'test.gif', duration=10, unit="s", between="startend")
