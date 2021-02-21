@@ -14,7 +14,7 @@ def fft_crosscorr(x, y):
     return fftshift(cc)
 
 
-V_SOUND = 338  # speed of sound
+V_SOUND = 343  # speed of sound
 NUM_SLICES = 20  # of slices to divide circle into
 MIC_SPACING = 0.062  # meters
 NUM_MICS = 4
@@ -204,36 +204,51 @@ def algorithm(microphones):
 
 def plot_fft_corr(microphones):
     print("start")
-    interval = 1000
-    start = round(1.5 * SAMPLING_RATE)
-    end = round(2.2 * SAMPLING_RATE)
-    for i in range(start, end, interval):
+
+    @gif.frame
+    def plot(i):
         a = True
         for m1, m2 in Mic.get_pairs(microphones):
             if a is True:
                 plt.plot(fft_crosscorr(m1.audio[i:i + interval], m2.audio[i:i + interval]), color="green")
             else:
-                pass
-                # plt.plot(fft_crosscorr(m1.audio[i:i + interval], m2.audio[i:i + interval]), color="red")
+                plt.plot(fft_crosscorr(m1.audio[i:i + interval], m2.audio[i:i + interval]), color="red")
 
+            plt.ylim([-8000000, 8000000])
             a = not a
+
+    interval = 500
+    start = round(0.5 * SAMPLING_RATE)
+    end = round(1.5 * SAMPLING_RATE)
+    for index in range(start, end, interval):
+        sound_frames.append(plot(index))
+    
+    
 
     plt.show()
     print("stop")
-    
+
+def play_audio(microphones):
+    import simpleaudio as sa
+    audio = microphones[0].audio
+    print(len(audio)/SAMPLING_RATE)
+    plt.plot(audio)
+    plt.show()
+    play = sa.play_buffer(audio, 1, 2, SAMPLING_RATE)
+    play.wait_done()
 
 
 def main():
-    file = 'data/dog_barking_90/combined.wav'
+    file = 'data/dog_barking_90_speech_270/combined.wav'
     print(f"Using file {file}")
     microphones = Mic.from_recording(4, file)
     # export_tracks(microphones)
     # algorithm(microphones)
     plot_fft_corr(microphones)
-
+    # play_audio(microphones)
 
 
 if __name__ == "__main__":
     main()
     # https://github.com/maxhumber/gif
-    # gif.save(sound_frames, 'test.gif', duration=10, unit="s", between="startend")
+    gif.save(sound_frames, 'test.gif', duration=5, unit="s", between="startend")
