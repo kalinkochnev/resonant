@@ -7,7 +7,7 @@ V_SOUND = 338  # speed of sound
 NUM_SLICES = 20  # of slices to divide circle into
 MIC_SPACING = 0.062  # meters
 NUM_MICS = 4
-SAMPLING_RATE = 348000  # of samples taken per second for each track
+SAMPLING_RATE = 22050  # of samples taken per second for each track
 
 # TODO not done
 # 0 means no interpolation, 1 means one additional index for each amplitude
@@ -147,9 +147,9 @@ def algorithm(microphones):
             for m1, m2 in Mic.get_pairs(microphones):
                 m1.shift_audio(m1.delay_from_source(src_pt))
                 m2.shift_audio(m2.delay_from_source(src_pt))
-
-                avg_correlation += abs(Mic.correlate(m1, m2)) / (NUM_MICS / 2)
-
+                corr = Mic.correlate(m1, m2)
+                
+                avg_correlation += corr / (NUM_MICS / 2)
             # Set the radius = to the avg correlation for easier graphing
             src_pt.radius = avg_correlation
             correlated_pts.append(src_pt)
@@ -168,6 +168,9 @@ def algorithm(microphones):
     ax = fig.add_subplot(111, projection='3d')
 
     ax.scatter(x, y, z)
+
+    
+    # ax.scatter()
 
     plt.show()
 
