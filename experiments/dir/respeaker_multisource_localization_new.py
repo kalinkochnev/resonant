@@ -9,7 +9,7 @@ import wave
 import scipy.io.wavfile
 
 SPEED_OF_SOUND = 343
-MIC_SEPARATION = 0.08182 # using diagonal pairs of mics
+MIC_SEPARATION = 0.057 # using diagonal pairs of mics
 FORMAT = pyaudio.paInt16
 CHANNELS = 4
 RATE = 44000
@@ -98,7 +98,7 @@ def diffAngle(a1, a2):
     return diff
 
 def getOffsets(a):
-    m = MIC_SEPARATION / 4
+    m = MIC_SEPARATION / 2
     o1 = round((-m*math.sin(math.radians(a)) - m*math.cos(math.radians(a))) / SPEED_OF_SOUND * RATE)
     o2 = round((m*math.sin(math.radians(a)) - m*math.cos(math.radians(a))) / SPEED_OF_SOUND * RATE)
     o3 = round((m*math.sin(math.radians(a)) + m*math.cos(math.radians(a))) / SPEED_OF_SOUND * RATE)
