@@ -30,8 +30,8 @@ class Display():
         # Get drawing object to draw on image.
         draw = ImageDraw.Draw(image)
         padding = 5
-        ellipsis_width = 128-padding
-        ellipsis_height = 32-padding
+        ellipsis_width = width-padding
+        ellipsis_height = height-padding
 
         # Clear the screen
         draw.rectangle((0,0,width,height), outline=0, fill=0)
@@ -41,22 +41,22 @@ class Display():
 
         # Draw the dot indicating position
         a = self.angle*(math.pi/180)
-        x = math.cos(a) * (ellipsis_width/2 - 4) + 64
-        y = -math.sin(a) * (ellipsis_height/2 - 4) + 16
+        x = math.cos(a) * (ellipsis_width/2 - 4) + width/2
+        y = -math.sin(a) * (ellipsis_height/2 - 4) + height/2
         draw.ellipse((x-4, y-4, x+4, y+4), outline=255, fill=1)
 
         # Display the text
+        char_width = 8
+        char_height = 16
         # font = ImageFont.load_default()
-        font = ImageFont.truetype('freepixel.ttf', 16)
-        lines = textwrap.wrap(self.sound, width=16)[:2]
+        font = ImageFont.truetype('freepixel.ttf', char_height)
+        lines = textwrap.wrap(self.sound, width=width/char_width)[:2]
 
-        y = 8
-        if len(lines) > 1:
-            y = 0
+        start_y = (height - len(lines)*char_height)/2
 
         for l in range(0,len(lines)):
-            x = 64 - (len(lines[l]) * 4)
-            draw.text((x, y + l*14), lines[l],  font=font, fill=255)
+            x = (width - (len(lines[l]) * char_width)) / 2
+            draw.text((x, start_y + l * (char_height-2)), lines[l],  font=font, fill=255)
 
         # Push the image to the display
         self.disp.image(image)
