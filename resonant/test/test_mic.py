@@ -3,9 +3,9 @@ import math
 
 import numpy as np
 import pytest
-from resonant.source.geometry import SphericalPt
-from resonant.source.mic import Mic
-import resonant.source.constants as resonant
+from source.geometry import SphericalPt
+from source.mic import Mic
+import source.constants as resonant
 
 
 @pytest.fixture

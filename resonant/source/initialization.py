@@ -1,9 +1,9 @@
 from typing import List
 
 import numpy as np
-import resonant.source.constants as resonant
+import source.constants as resonant
 import scipy.io.wavfile as wav
-from resonant.source.mic import Mic
+from source.mic import Mic
 
 
 class AudioIter:
@@ -35,6 +35,7 @@ class OfflineAudioIter(AudioIter):
 
     def load_channels(self, path: str) -> List[np.ndarray]:
         rate, recording = wav.read(path)
+        print(rate)
         assert rate == resonant.SAMPLING_RATE
         flattened = recording.flatten()
         return self.split_into_channels(flattened)

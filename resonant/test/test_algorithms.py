@@ -1,8 +1,8 @@
 import pytest
-from resonant.source.mic import Mic
-from resonant.source.geometry import SphericalPt
-from resonant.source.algorithms import Algorithm
-import resonant.source.constants as resonant
+from source.mic import Mic
+from source.geometry import SphericalPt
+from source.algorithms import Algorithm
+import source.constants as resonant
 import numpy as np
 
 @pytest.mark.parametrize("signal, expected", [

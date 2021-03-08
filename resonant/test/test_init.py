@@ -3,10 +3,10 @@ from typing import List
 from pathlib import Path
 
 import pytest
-import resonant.source.constants as resonant
+import source.constants as resonant
 import scipy.io.wavfile as wav
-from resonant.source.geometry import SphericalPt
-from resonant.source.initialization import AudioIter, OfflineAudioIter
+from source.geometry import SphericalPt
+from source.initialization import AudioIter, OfflineAudioIter
 import numpy as np
 
 

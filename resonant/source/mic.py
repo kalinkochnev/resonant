@@ -1,8 +1,8 @@
 from typing import List
 import numpy as np
 import math
-from resonant.source.geometry import SphericalPt
-import resonant.source.constants as resonant
+from source.geometry import SphericalPt
+import source.constants as resonant
 from numpy.fft import fft, ifft, fft2, ifft2, fftshift
 
 

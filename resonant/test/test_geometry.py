@@ -1,7 +1,6 @@
 import pytest
-import experiments.threeD as settings
-from resonant.source.geometry import SphericalPt
-from resonant.source.mic import Mic
+from source.geometry import SphericalPt
+from source.mic import Mic
 import math
 import numpy as np
 
