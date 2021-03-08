@@ -1,0 +1,30 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Sync to Pi",
+            "type": "shell",
+            "command": "rsync -avz --exclude env/ -e ssh ${workspaceRoot}/ pi@${input:ip}:resonant/",
+            "problemMatcher": []
+        },
+        {
+            "label": "Connect to pi",
+            "type": "shell",
+            "command": "ssh pi@${input:ip}",
+            "dependsOn": [
+                "Sync to Pi"
+            ],
+            "problemMatcher": [],
+        },
+    ],
+    "inputs": [
+        {
+            "id": "ip",
+            "description": "IP to connect to the raspberry pi",
+            "default": "192.168.0.35",
+            "type": "promptString"
+        },
+    ]
+}
