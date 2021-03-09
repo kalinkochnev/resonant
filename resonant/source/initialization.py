@@ -82,7 +82,7 @@ class StreamProcessor:
         flattened_window = np.zeros(0)
 
         # This creates a flattened array of all the microphone readings    
-        for queue_index in range(num_chunks):
+        for queue_index in range(num_chunks-1):
             chunk = self.audio_queue.get() # Pop left is first in first out
             flattened_window = np.append(flattened_window, chunk)
 
@@ -139,11 +139,8 @@ class RealtimeAudio(StreamProcessor):
 
     def __iter__(self):
         self.stream.start_stream()
-        print("stream started")
         return self
 
     def __next__(self):
-        print("start")
         self.update_channels(self.flatten_queue())
-        print("update")
 

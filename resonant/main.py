@@ -1,5 +1,5 @@
 from source.initialization import OfflineAudioIter, RealtimeAudio
-from source.algorithms import SphereTester
+from source.algorithms import CSPAnalysis
 import source.constants as const
 import pyaudio
 import numpy as np
@@ -14,11 +14,15 @@ if __name__ == "__main__":
 
     # Init resources
     # ml_resources = ml.init()
+    algo = CSPAnalysis(mics)
     live_audio = RealtimeAudio()
     # fig = plt.figure()
     # ax = fig.add_subplot(111)
     # line, = ax.plot(live_audio.audio_channels[0])
 
+
+
+def live():
     try:
         for a in live_audio:
             # print(int(live_audio.audio_channels[0].max()/30) *"|", end=100 * " " + "\r")
@@ -26,14 +30,12 @@ if __name__ == "__main__":
             # print(f"max size {live_audio.audio_queue.maxsize}")
             # print(f"start of arr: {live_audio.audio_channels[0]}")
             # print(f"{live_audio.audio_queue.queue}")
-            plt.clf()
-            plt.plot(live_audio.audio_channels[0]) 
-            plt.pause(0.01)
-            plt.draw()
-            pass
-        # iter(live_audio)
-        # next(live_audio)
-
+            # plt.clf()
+            # plt.plot(live_audio.audio_channels[0]) 
+            # plt.pause(0.01)
+            # plt.draw()
+            algo.update_signals([np.copy(channel) for channel in live_audio.audio_channels])
+            algo.run_algorithm()
 
     except Exception as e:
         print(e)

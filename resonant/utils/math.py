@@ -6,3 +6,4 @@ def fft_crosscorr(x, y):
     f2 = np.fft(np.flipud(y))
     cc = np.real(np.ifft(f1 * f2))
     return np.fftshift(cc)
+
