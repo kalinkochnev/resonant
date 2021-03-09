@@ -1,4 +1,4 @@
-from source.initialization import OfflineAudioIter, RealtimeAudio
+from source.initialization import AudioIter, OfflineAudioIter, RealtimeAudio
 from source.algorithms import CSPAnalysis
 import source.constants as const
 import pyaudio
@@ -8,40 +8,29 @@ import matplotlib.pyplot as plt
 import scipy.io.wavfile
 
 if __name__ == "__main__":
-    # Load audio file
-    audio_iter = OfflineAudioIter('../data/dog_barking_90/combined.wav')
-    mics = audio_iter.initialize_mics()
+    # Load audio live_audiofile
+    # audio_iter = OfflineAudioIter('../data/street_sounds_135/combined.wav')
+    # mics = audio_iter.initialize_mics()
 
     # Init resources
     # ml_resources = ml.init()
-    algo = CSPAnalysis(mics)
+    algo = CSPAnalysis(AudioIter.initialize_mics())
     live_audio = RealtimeAudio()
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-    # line, = ax.plot(live_audio.audio_channels[0])
 
+    for channels in live_audio:
+        # plt.clf()
+        # plt.plot(live_audio.audio_channels[0]) 
+        # plt.pause(0.01)
+        # plt.draw()
+        algo.update_signals([np.copy(channel[0:const.WINDOW_SIZE]) for channel in channels])
+        # algo.update_signals(a)
+        algo.run_algorithm()
+        # time.sleep(2)
 
+    live_audio.stream.stop_stream()
+    live_audio.stream.close()
+    live_audio.pyaudio.terminate()
 
-def live():
-    try:
-        for a in live_audio:
-            # print(int(live_audio.audio_channels[0].max()/30) *"|", end=100 * " " + "\r")
-            # print(f"Len queue: {live_audio.audio_queue.qsize()}   Len window: {live_audio.audio_channels[0].size}")
-            # print(f"max size {live_audio.audio_queue.maxsize}")
-            # print(f"start of arr: {live_audio.audio_channels[0]}")
-            # print(f"{live_audio.audio_queue.queue}")
-            # plt.clf()
-            # plt.plot(live_audio.audio_channels[0]) 
-            # plt.pause(0.01)
-            # plt.draw()
-            algo.update_signals([np.copy(channel) for channel in live_audio.audio_channels])
-            algo.run_algorithm()
-
-    except Exception as e:
-        print(e)
-        live_audio.stream.stop_stream()
-        live_audio.stream.close()
-        live_audio.pyaudio.terminate()
 
     # Main thread that reads audio
 

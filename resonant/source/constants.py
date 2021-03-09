@@ -3,9 +3,9 @@ import pyaudio
 V_SOUND = 343  # speed of sound
 NUM_SLICES = 20  # of slices to divide circle into
 MIC_SPACING = 0.062  # meters
-NUM_MICS = 1
+NUM_MICS = 4
 SAMPLING_RATE = 22050  # of samples taken per second for each channel
-WINDOW_SIZE = 800 # This is the number of samples to run the algorithm on
+WINDOW_SIZE = round(0.5 * SAMPLING_RATE) # This is the number of samples to run the algorithm on
 # TODO not done
 # 0 means no interpolation, 1 means one additional index for each amplitude
 INTERPOLATION_AMOUNT = 0

@@ -3,7 +3,7 @@ from typing import List
 import matplotlib.pyplot as plt
 
 import numpy as np
-import numpy.fft
+from numpy.fft import fft, ifft
 from scipy import signal
 import source.constants as resonant
 from source.mic import Mic
@@ -83,11 +83,11 @@ class SphereTester(Algorithm):
 class CSPAnalysis(Algorithm):
     def run_algorithm(self):
         for m1, m2 in self.pairs:
-            m1_fft = np.fft(m1.signal)
-            m2_fft = np.fft(m2.signal)
+            m1_fft = fft(m1.signal)
+            m2_fft = fft(m2.signal)
             numerator = m1_fft * np.conjugate(m2_fft)
             denominator = np.abs(m1_fft) * np.abs(m2_fft)
-            time_delay = np.ifft(numerator/denominator).max()
+            time_delay = ifft(numerator/denominator).max()
             formula = math.acos(resonant.V_SOUND * time_delay / (resonant.MIC_SPACING * math.sqrt(2) * resonant.SAMPLING_RATE))
-            print(formula)
+            print(math.degrees(formula))
         

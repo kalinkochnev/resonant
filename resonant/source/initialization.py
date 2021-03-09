@@ -25,8 +25,13 @@ class AudioIter:
             signals.append(audio[mic_index::resonant.NUM_MICS])
         return signals
 
-    def initialize_mics(self) -> List[Mic]:
-        pass
+    @classmethod
+    def initialize_mics(cls) -> List[Mic]:
+        microphones: List[Mic] = []
+        for pos in resonant.MIC_POSITIONS:
+            microphones.append(Mic(np.zeros(0), pos))
+
+        return microphones
 
     def __next__(self):
         pass
@@ -38,18 +43,15 @@ class OfflineAudioIter(AudioIter):
         self.current_loc = 0  # Current location in terms of indices
         self.initialize_mics()
 
+    @classmethod
     def load_channels(self, path: str) -> List[np.ndarray]:
         rate, recording = wav.read(path)
+        print(rate)
         assert rate == resonant.SAMPLING_RATE
         flattened = recording.flatten()
         return self.split_into_channels(flattened)
 
-    def initialize_mics(self) -> List[Mic]:
-        microphones: List[Mic] = []
-        for pos in resonant.MIC_POSITIONS:
-            microphones.append(Mic(np.zeros(0), pos))
-
-        return microphones
+    
 
     def __next__(self):
         signals: List[np.ndarray] = []
