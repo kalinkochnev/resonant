@@ -20,7 +20,7 @@ class Hat():
         self.font = ImageFont.truetype('freepixel-modified.ttf', 16)
 
         # Give a helpful message to the user
-        self.draw(-1, "Starting Up")
+        self.draw(-1, "Starting Up...")
 
         # Set up the IMU
         self.imu = MPU9250.MPU9250(smbus.SMBus(1), 0x68)
@@ -31,6 +31,7 @@ class Hat():
 
     def calibrate(self):
         # Gyro is to be kept still during calibration
+        self.draw(-1, "Calibrating...")
         self.imu.caliberateGyro()
 
     def lock(self, lock_angle, sound_name):
@@ -121,9 +122,7 @@ class Hat():
 
 
 hat = Hat()
-
+hat.calibrate()
 hat.lock(90, "Duck Honk")
-time.sleep(5)
-hat.lock(60, "Goose")
-time.sleep(2)
+time.sleep(10)
 hat.unlock()
