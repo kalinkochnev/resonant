@@ -11,8 +11,8 @@ WINDOW_SIZE = 800 # This is the number of samples to run the algorithm on
 INTERPOLATION_AMOUNT = 0
 
 AUDIO_FORMAT = pyaudio.paInt16
-AUDIO_FRAME_SIZE = 5000
-LARGE_WINDOW = 5 #  # of seconds
+AUDIO_FRAME_SIZE = 1000 # We assume that there are this many samples for each microphone for the reading
+LARGE_WINDOW = 5 * SAMPLING_RATE #  # of seconds times sampling rate
 
 import source.geometry as geom
 MIC_POSITIONS = [

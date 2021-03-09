@@ -79,3 +79,6 @@ class SphereTester(Algorithm):
         plt.draw()
 
                     
+class CSPAnalysis(Algorithm):
+    def run_algorithm(self):
+        pass

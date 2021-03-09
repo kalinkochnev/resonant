@@ -12,10 +12,12 @@ import numpy as np
 
 class TestBaseAudioIter:
     def test_split_channels(self):
-        data = [1, 2, 3, 4, 1, 2, 3, 4]
-        expected = [ [1, 1], [2, 2], [3, 3], [4, 4] ]
+        resonant.NUM_MICS = 4
+        data = np.array([1, 2, 3, 4, 1, 2, 3, 4])
+        expected = [ np.array([1, 1]), np.array([2, 2]), np.array([3, 3]), np.array([4, 4]) ]
         a = AudioIter()
-        assert a.split_into_channels(data) == expected
+        for expec_chan, actual_chan in zip(expected, a.split_into_channels(data)):
+            assert np.array_equal(expec_chan, actual_chan)
 
 @pytest.fixture
 def audio_file(tmp_path):

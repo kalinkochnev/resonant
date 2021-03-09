@@ -58,3 +58,9 @@ class Mic:
         f2 = fft(np.flipud(b.signal))
         cc = np.real(ifft(f1 * f2))
         return fftshift(cc)
+
+class Source:
+    def __init__(self, position):
+        self.tracked = False
+        self.position: SphericalPt = position
+        self.audio = np.empty()

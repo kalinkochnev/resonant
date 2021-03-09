@@ -1,57 +1,45 @@
-from source.initialization import OfflineAudioIter
+from source.initialization import OfflineAudioIter, RealtimeAudio
 from source.algorithms import SphereTester
 import source.constants as const
 import pyaudio
 import numpy as np
 import time
-
-lw_size = const.SAMPLING_RATE * const.LARGE_WINDOW
-large_window = np.zeros(lw_size)
-
-
-def reader(in_data, frame_count, time_info, status):
-    global large_window
-    new_data = np.frombuffer(in_data, dtype=np.int16)
-    updated = np.concatenate((new_data, large_window[:lw_size-frame_count]))
-    large_window = updated
-    print(f"{large_window} ---- size: {large_window[large_window !=0].size} ----- arr siez {large_window.size}")
-
-    return (in_data, pyaudio.paContinue)
-
-
-def choose_audio_device(p_audio):
-    info = p_audio.get_host_api_info_by_index(0)
-    numdevices = info.get('deviceCount')
-    for i in range(0, numdevices):
-        if (p_audio.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-            print("Input Device id ", i, " - ",
-                  p_audio.get_device_info_by_host_api_device_index(0, i).get('name'))
-    return int(input("What input id do you choose?"))
-
+import matplotlib.pyplot as plt
+import scipy.io.wavfile
 
 if __name__ == "__main__":
     # Load audio file
     audio_iter = OfflineAudioIter('../data/dog_barking_90/combined.wav')
     mics = audio_iter.initialize_mics()
-    """localization = SphereTester(mics)
-
-    for window in audio_iter:
-        localization.update_signals(window)
-        localization.run()"""
 
     # Init resources
     # ml_resources = ml.init()
-    py_aud = pyaudio.PyAudio()
-    audio_stream = py_aud.open(format=const.AUDIO_FORMAT, channels=const.NUM_MICS,
-                               rate=const.SAMPLING_RATE, input=True, frames_per_buffer=const.AUDIO_FRAME_SIZE, 
-                               stream_callback=reader, input_device_index=choose_audio_device(py_aud))
-    audio_stream.start_stream()
-    while audio_stream.is_active():
-        time.sleep(0.2)
+    live_audio = RealtimeAudio()
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # line, = ax.plot(live_audio.audio_channels[0])
 
-    audio_stream.stop_stream()
-    audio_stream.close()
-    py_aud.terminate()
+    try:
+        for a in live_audio:
+            # print(int(live_audio.audio_channels[0].max()/30) *"|", end=100 * " " + "\r")
+            # print(f"Len queue: {live_audio.audio_queue.qsize()}   Len window: {live_audio.audio_channels[0].size}")
+            # print(f"max size {live_audio.audio_queue.maxsize}")
+            # print(f"start of arr: {live_audio.audio_channels[0]}")
+            # print(f"{live_audio.audio_queue.queue}")
+            plt.clf()
+            plt.plot(live_audio.audio_channels[0]) 
+            plt.pause(0.01)
+            plt.draw()
+            pass
+        # iter(live_audio)
+        # next(live_audio)
+
+
+    except Exception as e:
+        print(e)
+        live_audio.stream.stop_stream()
+        live_audio.stream.close()
+        live_audio.pyaudio.terminate()
 
     # Main thread that reads audio
 

@@ -9,5 +9,5 @@
     "python.testing.unittestEnabled": false,
     "python.testing.nosetestsEnabled": false,
     "python.testing.pytestEnabled": true,
-    "pytest.command":"/home/kalin/Coding/resonant/resonant/env/bin/pytest"
+    "pytest.command":"/usr/local/bin/pytest"
 }

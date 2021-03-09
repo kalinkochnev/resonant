@@ -1,7 +1,7 @@
 import math
 
 class SphericalPt:
-    def __init__(self, radius, polar_angle, azimuth_angle):
+    def __init__(self, radius, polar_angle, azimuth_angle=0):
         """The polar angle represents the rotation along the xy plane. Azimuth represents
         3D component from xy"""
         self.radius = radius
