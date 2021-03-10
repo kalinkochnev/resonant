@@ -1,13 +1,17 @@
-import librosa
-import librosa.display
+from librosa.feature import mfcc
+print("librosa.feature.mfcc")
+from librosa import load
+print("librosa.load")
 import tensorflow.keras as keras
+print("keras")
 import time
+print("time")
 import numpy as np
-import pyaudio
-
+print("numpy")
+# import pyaudio
 
 SAMPLE_RATE = 22050
-FORMAT = pyaudio.paInt16
+# FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44000
 CHUNK = 1024
@@ -63,19 +67,37 @@ MAPPING = {
 
 
 def predict_sound(file_path, algo, n_mfcc=13, n_fft=2048, hop_length=512):
-    signal, sr = librosa.load(file_path, sr=SAMPLE_RATE, mono=True)
+    print("got here 1")
+    signal, sr = load(file_path, sr=SAMPLE_RATE, mono=True)
     start = time.time()
-    mfcc = librosa.feature.mfcc(signal, SAMPLE_RATE, n_fft=n_fft, n_mfcc=n_mfcc, hop_length=hop_length)
+    print("got here 2")
+    mfcc_data = mfcc(signal, SAMPLE_RATE, n_fft=n_fft, n_mfcc=n_mfcc, hop_length=hop_length)
     array = np.zeros((1, 2262))
-    sample_array = mfcc.T.flatten()
+    sample_array = mfcc_data.T.flatten()
+    print("got here 3")
     array[0, 0:sample_array.size] = sample_array
     answer = np.argmax(algo.predict(array))
+    print("got here 4")
     words = MAPPING[answer]
     print(words, np.max(algo.predict(array)))
+    print("got here 5")
     time_elapsed_milliseconds = int((time.time() - start)*1000)
     print('calculation time: ' + str(time_elapsed_milliseconds) + ' milliseconds')
 
 
 if __name__ == '__main__':
+    print("started")
     model = keras.models.load_model('classifier_algo_2/')
+    print("loaded")
+    predict_sound('dog_bark_mic_mono.wav', model)
+    predict_sound('dog_bark_mic_mono.wav', model)
+    predict_sound('dog_bark_mic_mono.wav', model)
+    predict_sound('dog_bark_mic_mono.wav', model)
+    predict_sound('dog_bark_mic_mono.wav', model)
+    predict_sound('dog_bark_mic_mono.wav', model)
+    predict_sound('dog_bark_mic_mono.wav', model)
+    predict_sound('dog_bark_mic_mono.wav', model)
+    predict_sound('dog_bark_mic_mono.wav', model)
+    predict_sound('dog_bark_mic_mono.wav', model)
+    predict_sound('dog_bark_mic_mono.wav', model)
     predict_sound('dog_bark_mic_mono.wav', model)
