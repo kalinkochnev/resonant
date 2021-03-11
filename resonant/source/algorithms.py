@@ -3,11 +3,12 @@ from typing import List
 import matplotlib.pyplot as plt
 
 import numpy as np
-from numpy.fft import fft, ifft
+from numpy.fft import fft, ifft, ifftshift, fftshift
 from scipy import signal
 import source.constants as resonant
 from source.mic import Mic, Source
 from source.geometry import SphericalPt
+from utils.math import fft_crosscorr
 import time
 
 class Algorithm:  # Abstract class to implement algorithms:
@@ -24,6 +25,7 @@ class Algorithm:  # Abstract class to implement algorithms:
         def grouper(arr, group_size): return zip(*(iter(arr),) * group_size)
 
         return [*grouper(evens, 2), *grouper(odds, 2)]
+        # return [*grouper(evens, 2)]
 
     def update_signals(self, signals: List[np.ndarray]):
         signals = self.interpolate_signals(signals)  # Pre-process signals
@@ -87,24 +89,18 @@ class CSPAnalysis(Algorithm):
         self.poten_srcs = List[Source]
 
     def run_algorithm(self):
-        angle = self.sound_angle()
-        if should_recognize():
-            return Source(angle, self.microphones[0].audio)
-        return None
-
-    def sound_angle(self):
-        for m1, m2 in self.pairs:
+        print(self.microphones)
+        for m1, m2 in self.microphones:
+            print(self.microphones)
             m1_fft = fft(m1.signal)
             m2_fft = fft(m2.signal)
-            numerator = m1_fft * np.conjugate(m2_fft)
-            denominator = np.abs(m1_fft) * np.abs(m2_fft)
-            time_delay = ifft(numerator/denominator)
-            formula = math.acos(resonant.V_SOUND * time_delay.max() / (resonant.MIC_SPACING * math.sqrt(2) * resonant.SAMPLING_RATE))
-            plt.clf()
-            plt.plot(time_delay) 
-            plt.pause(0.01)
-            plt.draw()
-            print(math.degrees(formula))
+            index_delay = fft_crosscorr(m1.signal, m2.signal).argmax() - len(m1.signal) / 2
+
+            ratio = resonant.V_SOUND * index_delay / (resonant.SAMPLING_RATE * resonant.MIC_SPACING * math.sqrt(2))
+            ratio = np.clip(ratio, -1, 1)
+
+            angle = math.acos(ratio) * (180/math.pi)
+            # print(angle)
     def should_recognize(self) -> bool: 
         return self.microphones[0].audio.mean() < resonant.
 
@@ -112,4 +108,3 @@ class CSPAnalysis(Algorithm):
         # Use smaller window
         shrunk_signals = [np.copy(channel[0:resonant.WINDOW_SIZE]) for channel in channels]
         return super().update_signals(shrunk_signals)
-        

@@ -1,8 +1,9 @@
 import time
 import threading
-import library.Adafruit_SSD1306 as Adafruit_SSD1306
-from library.imusensor.MPU9250 import MPU9250
-import library.smbus as smbus
+import libraries.
+import libraries.Adafruit_SSD1306 as Adafruit_SSD1306
+from libraries.imusensor.MPU9250 import MPU9250
+import libraries.smbus as smbus
 import math
 
 from PIL import Image, ImageFont, ImageDraw
