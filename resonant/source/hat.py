@@ -15,7 +15,7 @@ class Hat():
         self.disp.begin()
         self.disp.clear()
         self.disp.display()
-        self.font = ImageFont.truetype('freepixel-modified.ttf', 16)
+        self.font = ImageFont.truetype('../assets/freepixel-modified.ttf', 16)
 
         # Give a helpful message to the user
         self.draw(-1, "Starting Up")
