@@ -1,14 +1,11 @@
 import time
 import threading
-import Adafruit_SSD1306
-from imusensor.MPU9250 import MPU9250
-import smbus
+import library.Adafruit_SSD1306 as Adafruit_SSD1306
+from library.imusensor.MPU9250 import MPU9250
+import library.smbus as smbus
 import math
 
-from PIL import Image
-from PIL import ImageFont
-from PIL import ImageDraw
-
+from PIL import Image, ImageFont, ImageDraw
 
 class Hat():
     def __init__(self):
