@@ -4,7 +4,7 @@ import math
 import numpy as np
 import pytest
 from source.geometry import SphericalPt
-from source.mic import Mic
+from source.mic import Mic, Source
 import source.constants as resonant
 
 
@@ -55,3 +55,23 @@ class TestMic:
         microphone.reset_shift()
         assert microphone.audio_shift == 0
         assert np.array_equal(microphone.signal, signal)
+
+class TestSource:
+    def test_ml_min_samples(self):
+        resonant.MIN_ML_SAMPLES = 6
+        resonant.MAX_ML_SAMPLES = 10
+
+        src = Source(33, np.zeros(5))
+        assert src.can_ml_analyze is False
+
+        src.audio = np.zeros(6)
+        assert src.can_ml_analyze is True
+
+    def test_ml_max_samples(self):
+        resonant.MIN_ML_SAMPLES = 6
+        resonant.MAX_ML_SAMPLES = 10
+        src = Source(33, np.zeros(7))
+        assert src.can_ml_analyze is True
+
+        src.audio = np.zeros(11)
+        assert src.can_ml_analyze is False

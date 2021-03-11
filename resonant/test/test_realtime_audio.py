@@ -46,7 +46,7 @@ def test_update_channels():
         np.array([1, 1, 0, 0, 0]),
         np.array([2, 2, 0, 0, 0])
     ]
-    process.update_channels(data)
+    process.cycle_channels(data)
     for arr_result, arr_expected in zip(process.audio_channels, expected):
         assert np.array_equal(arr_result, arr_expected)
 
@@ -55,7 +55,7 @@ def test_update_channels():
         np.array([1, 1, 1, 1, 0]),
         np.array([2, 2, 2, 2, 0])
     ]
-    process.update_channels(data)
+    process.cycle_channels(data)
     for arr_result, arr_expected in zip(process.audio_channels, expected):
         assert np.array_equal(arr_result, arr_expected)
     

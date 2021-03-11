@@ -1,5 +1,6 @@
 from source.initialization import AudioIter, OfflineAudioIter, RealtimeAudio
 from source.algorithms import CSPAnalysis
+from source.ml import SourceScheduler
 import source.constants as const
 import pyaudio
 import numpy as np
@@ -8,24 +9,22 @@ import matplotlib.pyplot as plt
 import scipy.io.wavfile
 
 if __name__ == "__main__":
-    # Load audio live_audiofile
-    # audio_iter = OfflineAudioIter('../data/street_sounds_135/combined.wav')
-    # mics = audio_iter.initialize_mics()
 
     # Init resources
     # ml_resources = ml.init()
-    algo = CSPAnalysis(AudioIter.initialize_mics())
-    live_audio = RealtimeAudio()
+    localizer = CSPAnalysis(AudioIter.initialize_mics())
+    live_audio = RealtimeAudio(audio_device=18)
+    src_scheduler = SourceScheduler()
 
     for channels in live_audio:
-        # plt.clf()
-        # plt.plot(live_audio.audio_channels[0]) 
-        # plt.pause(0.01)
-        # plt.draw()
-        algo.update_signals([np.copy(channel[0:const.WINDOW_SIZE]) for channel in channels])
-        # algo.update_signals(a)
-        algo.run_algorithm()
-        # time.sleep(2)
+        localizer.update_signals(channels)
+        src  = localizer.run_algorithm()
+        if src is not None:
+            src_scheduler.ingest(src)
+
+        # localizer.display_srcs()
+
+
 
     live_audio.stream.stop_stream()
     live_audio.stream.close()

@@ -6,7 +6,7 @@ import numpy as np
 from numpy.fft import fft, ifft
 from scipy import signal
 import source.constants as resonant
-from source.mic import Mic
+from source.mic import Mic, Source
 from source.geometry import SphericalPt
 import time
 
@@ -81,13 +81,35 @@ class SphereTester(Algorithm):
 
                     
 class CSPAnalysis(Algorithm):
+    def __init__(self, microphones):
+        super().__init__(microphones)
+        self.srcs = List[Source] = []
+        self.poten_srcs = List[Source]
+
     def run_algorithm(self):
+        angle = self.sound_angle()
+        if should_recognize():
+            return Source(angle, self.microphones[0].audio)
+        return None
+
+    def sound_angle(self):
         for m1, m2 in self.pairs:
             m1_fft = fft(m1.signal)
             m2_fft = fft(m2.signal)
             numerator = m1_fft * np.conjugate(m2_fft)
             denominator = np.abs(m1_fft) * np.abs(m2_fft)
-            time_delay = ifft(numerator/denominator).max()
-            formula = math.acos(resonant.V_SOUND * time_delay / (resonant.MIC_SPACING * math.sqrt(2) * resonant.SAMPLING_RATE))
+            time_delay = ifft(numerator/denominator)
+            formula = math.acos(resonant.V_SOUND * time_delay.max() / (resonant.MIC_SPACING * math.sqrt(2) * resonant.SAMPLING_RATE))
+            plt.clf()
+            plt.plot(time_delay) 
+            plt.pause(0.01)
+            plt.draw()
             print(math.degrees(formula))
+    def should_recognize(self) -> bool: 
+        return self.microphones[0].audio.mean() < resonant.
+
+    def update_signals(self, channels):
+        # Use smaller window
+        shrunk_signals = [np.copy(channel[0:resonant.WINDOW_SIZE]) for channel in channels]
+        return super().update_signals(shrunk_signals)
         

@@ -3,8 +3,8 @@ import numpy as np
 import math
 from source.geometry import SphericalPt
 import source.constants as resonant
+from utils.arr import push_array
 from numpy.fft import fft, ifft, fft2, ifft2, fftshift
-
 
 class Mic:
     def __init__(self, audio: np.ndarray, position: SphericalPt):
@@ -60,7 +60,54 @@ class Mic:
         return fftshift(cc)
 
 class Source:
-    def __init__(self, position):
-        self.tracked = False
-        self.position: SphericalPt = position
-        self.audio = np.empty()
+    last_id = -1
+
+    def __init__(self, polar_angle, audio: np.ndarray):
+        self.id = None
+        self.position: SphericalPt = SphericalPt.angle_only(polar_angle)
+        self.name = None
+
+        temp_arr = np.empty(resonant.MAX_ML_SAMPLES)
+        temp_arr[:] = np.nan
+        self.audio = push_array(audio, temp_arr)
+        self.cycles_lived = 0
+        self.cycles_to_live = resonant.CYCLES_TO_LIVE
+
+    @property
+    def can_ml_analyze(self):
+        """Only when the source gets enough samples can it get analyzed"""
+        unfilled_count = np.count_nonzero(~np.isnan(self.audio))
+        return unfilled_count >= resonant.MIN_ML_SAMPLES and unfilled_count <= resonant.MAX_ML_SAMPLES
+
+    @property
+    def is_identified(self):
+        if self.name is not None:
+            assert self.id is not None, "Source is identified but not assigned an ID"
+            return True
+        return False
+
+    @property
+    def is_expired(self):
+        return self.cycles_lived >= self.cyc_to_live
+
+    def update_audio(self, new_audio):
+        push_array(new_audio, self.audio, resonant.MAX_ML_SAMPLES)
+
+    def set_inconclusive(self):
+        self.cyc_to_live = resonant.CYCLES_INCONCLUSIVE
+
+    def reset_cycles(self):
+        self.cycles_lived = 0
+
+    def track(self):
+        self.last_id += 1
+        self.id = self.last_id
+
+    def identify_as(self, name):
+        if self.id is None:
+            self.track()
+        
+        self.name = name
+
+    def decrease_life(self):
+        self.cycles_lived += 1
