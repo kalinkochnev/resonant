@@ -3,11 +3,12 @@ from typing import List
 import matplotlib.pyplot as plt
 
 import numpy as np
-from numpy.fft import fft, ifft
+from numpy.fft import fft, ifft, ifftshift, fftshift
 from scipy import signal
 import source.constants as resonant
 from source.mic import Mic
 from source.geometry import SphericalPt
+from utils.math import fft_crosscorr
 import time
 
 class Algorithm:  # Abstract class to implement algorithms:
@@ -24,6 +25,7 @@ class Algorithm:  # Abstract class to implement algorithms:
         def grouper(arr, group_size): return zip(*(iter(arr),) * group_size)
 
         return [*grouper(evens, 2), *grouper(odds, 2)]
+        # return [*grouper(evens, 2)]
 
     def update_signals(self, signals: List[np.ndarray]):
         signals = self.interpolate_signals(signals)  # Pre-process signals
@@ -82,12 +84,15 @@ class SphereTester(Algorithm):
                     
 class CSPAnalysis(Algorithm):
     def run_algorithm(self):
-        for m1, m2 in self.pairs:
+        print(self.microphones)
+        for m1, m2 in self.microphones:
+            print(self.microphones)
             m1_fft = fft(m1.signal)
             m2_fft = fft(m2.signal)
-            numerator = m1_fft * np.conjugate(m2_fft)
-            denominator = np.abs(m1_fft) * np.abs(m2_fft)
-            time_delay = ifft(numerator/denominator).max()
-            formula = math.acos(resonant.V_SOUND * time_delay / (resonant.MIC_SPACING * math.sqrt(2) * resonant.SAMPLING_RATE))
-            print(math.degrees(formula))
-        
+            index_delay = fft_crosscorr(m1.signal, m2.signal).argmax() - len(m1.signal) / 2
+
+            ratio = resonant.V_SOUND * index_delay / (resonant.SAMPLING_RATE * resonant.MIC_SPACING * math.sqrt(2))
+            ratio = np.clip(ratio, -1, 1)
+
+            angle = math.acos(ratio) * (180/math.pi)
+            # print(angle)
