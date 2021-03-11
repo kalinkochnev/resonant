@@ -131,3 +131,5 @@ dmypy.json
 # Vscode
 .vscode/settings.json
 test.gif
+# Pycharm ignore
+.idea/

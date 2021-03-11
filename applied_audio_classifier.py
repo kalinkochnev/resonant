@@ -93,6 +93,10 @@ def predict_sound(file_path, n_mfcc=13, n_fft=2048, hop_length=512):
 
     output_data = interpreter.get_tensor(output_details[0]['index'])
     print(mapping[output_data.argmax()])
+    time_elapsed_milliseconds = int((time.time() - start)*1000)
+    print(time_elapsed_milliseconds)
+    print(output_data.max()*100)
+    print(MAPPING[output_data.argmax()])
     return output_data
 
 
@@ -118,4 +122,13 @@ def predict_sound(file_path, n_mfcc=13, n_fft=2048, hop_length=512):
 if __name__ == '__main__':
     print("started")
     predict_sound('dog_bark_mic_mono.wav')
+    predict_sound('vehicle041.wav')
+    predict_sound('dog_bark_mic_mono.wav')
+    predict_sound('vehicle041.wav')
+    predict_sound('dog_bark_mic_mono.wav')
+    predict_sound('vehicle041.wav')
+    predict_sound('dog_bark_mic_mono.wav')
+    predict_sound('vehicle041.wav')
+    predict_sound('dog_bark_mic_mono.wav')
+
 
