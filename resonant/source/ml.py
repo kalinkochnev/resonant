@@ -7,7 +7,7 @@ from typing import List, Iterable
 
 
 class ML:
-    options = ['car honk', 'drilling', 'air conditioning', ]
+    options = ['car honk', 'drilling', 'air conditioning']
 
     def analyze(self, source: Source) -> Source:
         """This decides whether to mark a sound as conclusive or not"""
@@ -35,7 +35,7 @@ class SourceScheduler:
 
     def ingest(self, unidentifed: Source):
         self.update_equiv_src(unidentifed)
-        self.update_equiv_src(unidentifed)
+        self.filter_srcs(unidentifed)
 
     def update_equiv_src(self, new_src: Source):
         """"If the new source is within the margin of an old source, add its audio to the old source and

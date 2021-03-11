@@ -65,6 +65,10 @@ MAPPING = {
 #     print(amplitude)
 #     return(amplitude)
 
+def convert_audio():
+    float_signal = np.array(signal.as_type('float32'))
+    mfcc_data = mfcc(float_signal, 22050, n_fft=2048, n_mfcc=13, hop_length=512)
+    return mfcc_data
 
 def predict_sound(file_path, n_mfcc=13, n_fft=2048, hop_length=512):
     print("starting loading process...")

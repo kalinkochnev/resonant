@@ -23,7 +23,7 @@
         {
             "id": "ip",
             "description": "IP to connect to the raspberry pi",
-            "default": "192.168.0.35",
+            "default": "192.168.1.17",
             "type": "promptString"
         },
     ]

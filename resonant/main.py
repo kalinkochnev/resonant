@@ -1,5 +1,5 @@
 from source.initialization import AudioIter, OfflineAudioIter, RealtimeAudio
-from source.algorithms import CSPAnalysis
+from source.algorithms import SourceLocalization
 from source.ml import SourceScheduler
 import source.constants as const
 import pyaudio
@@ -12,15 +12,15 @@ if __name__ == "__main__":
 
     # Init resources
     # ml_resources = ml.init()
-    localizer = CSPAnalysis(AudioIter.initialize_mics())
-    live_audio = RealtimeAudio(audio_device=18)
-    src_scheduler = SourceScheduler()
+    localizer = SourceLocalization(AudioIter.initialize_mics())
+    live_audio = RealtimeAudio(audio_device=0)
+    # src_scheduler = SourceScheduler()
 
     for channels in live_audio:
         localizer.update_signals(channels)
         src  = localizer.run_algorithm()
-        if src is not None:
-            src_scheduler.ingest(src)
+        # if src is not None:
+            # src_scheduler.ingest(src)
 
         # localizer.display_srcs()
 

@@ -18,6 +18,7 @@ class Algorithm:  # Abstract class to implement algorithms:
     @property
     def pairs(self):
         # Assumes every other microphone is a "pair"
+        # TODO test this!!!
         evens = self.microphones[::2]
         odds = self.microphones[1::2]
 
@@ -82,27 +83,57 @@ class SphereTester(Algorithm):
         plt.draw()
 
                     
-class CSPAnalysis(Algorithm):
+class SourceLocalization(Algorithm):
     def __init__(self, microphones):
         super().__init__(microphones)
-        self.srcs = List[Source] = []
-        self.poten_srcs = List[Source]
+        self.srcs: List[Source] = []
+        self.poten_srcs: List[Source] = []
 
     def run_algorithm(self):
-        print(self.microphones)
-        for m1, m2 in self.microphones:
-            print(self.microphones)
-            m1_fft = fft(m1.signal)
-            m2_fft = fft(m2.signal)
-            index_delay = fft_crosscorr(m1.signal, m2.signal).argmax() - len(m1.signal) / 2
+        def get_ratio(m1, m2):
 
+            index_delay = fft_crosscorr(m1.signal, m2.signal).argmax() - len(m1.signal) / 2
             ratio = resonant.V_SOUND * index_delay / (resonant.SAMPLING_RATE * resonant.MIC_SPACING * math.sqrt(2))
             ratio = np.clip(ratio, -1, 1)
+            return ratio
 
-            angle = math.acos(ratio) * (180/math.pi)
-            # print(angle)
+        def ave_angle(a1, a2):
+            if (a1 < 90 and a2 > 270):
+                a1 -= 360
+            if (a2 < 90 and a1 > 270):
+                a2 -= 360
+            ave = (a1 + a2) / 2
+            if (ave < 0):
+                ave += 360
+            return ave
+        
+        r1 = get_ratio(self.microphones[0], self.microphones[2])
+        r2 = get_ratio(self.microphones[1], self.microphones[3])
+        
+        if (r1 >= 0 and r2 >= 0):
+            angle1 = -math.acos(r1) * (180/math.pi) + 225
+            angle2 = math.acos(r2) * (180/math.pi) + 135
+        elif (r1 <= 0 and r2 <= 0):
+            angle1 = math.acos(r1) * (180/math.pi) - 135
+            angle2 = -math.acos(r2) * (180/math.pi) + 135
+        elif (r1 > 0 and r2 < 0):
+            angle1 = math.acos(r1) * (180/math.pi) - 135
+            angle2 = math.acos(r2) * (180/math.pi) + 135
+        elif (r1 < 0 and r2 > 0):
+            angle1 = -math.acos(r1) * (180/math.pi) + 225
+            angle2 = -math.acos(r2) * (180/math.pi) + 135
+        
+        if (angle1 < 0):
+            angle1 += 360
+        if (angle2 < 0):
+            angle2 += 360
+        
+        print(ave_angle(angle1, angle2))
+        return ave_angle(angle1, angle2)
+        
+    
     def should_recognize(self) -> bool: 
-        return self.microphones[0].audio.mean() < resonant.
+        return self.microphones[0].audio.mean() < resonant
 
     def update_signals(self, channels):
         # Use smaller window

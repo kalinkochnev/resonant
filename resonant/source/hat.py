@@ -1,6 +1,5 @@
 import time
 import threading
-import libraries.
 import libraries.Adafruit_SSD1306 as Adafruit_SSD1306
 from libraries.imusensor.MPU9250 import MPU9250
 import libraries.smbus as smbus
