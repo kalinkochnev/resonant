@@ -55,7 +55,7 @@ class OfflineAudioIter(AudioIter):
 
     def __next__(self):
         signals: List[np.ndarray] = []
-        window = resonant.WINDOW_SIZE
+        window = resonant.LOCALIZING_WINDOW
 
         for sig in self.audio_channels:
             chunk = sig[self.current_loc:self.current_loc + window]

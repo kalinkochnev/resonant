@@ -6,7 +6,7 @@ import source.constants as resonant
 from typing import List, Iterable
 
 
-class ML:
+class AudioClassifier:
     options = ['car honk', 'drilling', 'air conditioning']
 
     def analyze(self, source: Source) -> Source:
@@ -21,7 +21,7 @@ class ML:
         return max_conf >= resonant.ML_CONF_THRESH
 
 class SourceScheduler:
-    def __init__(self, ml: ML):
+    def __init__(self, ml: AudioClassifier):
         self.sources: List[Source] = []
         self.ml = ml
 
@@ -34,8 +34,11 @@ class SourceScheduler:
         return filter(lambda src: not src.is_identified, self.sources)
 
     def ingest(self, unidentifed: Source):
-        self.update_equiv_src(unidentifed)
+        if unidentifed is not None:
+            self.update_equiv_src(unidentifed)
         self.filter_srcs(unidentifed)
+        print([src.cycles_lived for src in self.sources])
+        # print([str(src) for src in self.sources])
 
     def update_equiv_src(self, new_src: Source):
         """"If the new source is within the margin of an old source, add its audio to the old source and
@@ -51,6 +54,7 @@ class SourceScheduler:
 
                     # This means the ML was conclusive and it keeps it alive
                     if src.name is not None:
+                        print("reset")
                         src.reset_cycles()
 
                 return
@@ -61,15 +65,14 @@ class SourceScheduler:
 
     def filter_srcs(self, new_src: Source):
         # Decrease cycles for all items in array and removes expired
-        srcs_to_remove = []
 
         for src in self.sources:
             # Decreases life and removes sources if needed
-            if src.can_ml_analyze:
-                src.decrease_life()
-                if src.is_expired:
-                    self.sources.remove(src)
-                    continue
+
+            src.decrease_life()
+            if src.is_expired:
+                self.sources.remove(src)
+                continue
 
                 """if src.name == new_src.name:
                     # This most likely means it's the same source, so remove the new added source

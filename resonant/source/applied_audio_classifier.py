@@ -65,7 +65,7 @@ MAPPING = {
 #     print(amplitude)
 #     return(amplitude)
 
-def convert_audio():
+def convert_audio(signal):
     float_signal = np.array(signal.as_type('float32'))
     mfcc_data = mfcc(float_signal, 22050, n_fft=2048, n_mfcc=13, hop_length=512)
     return mfcc_data

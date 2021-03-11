@@ -73,6 +73,9 @@ class Source:
         self.cycles_lived = 0
         self.cycles_to_live = resonant.CYCLES_TO_LIVE
 
+    def __str__(self):
+        return f"Id: {self.id}, Position: {self.position.polar}"
+
     @property
     def can_ml_analyze(self):
         """Only when the source gets enough samples can it get analyzed"""
@@ -88,7 +91,7 @@ class Source:
 
     @property
     def is_expired(self):
-        return self.cycles_lived >= self.cyc_to_live
+        return self.cycles_lived >= self.cycles_to_live
 
     def update_audio(self, new_audio):
         push_array(new_audio, self.audio, resonant.MAX_ML_SAMPLES)

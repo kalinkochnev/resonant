@@ -53,7 +53,7 @@ class TestOfflineAudioIter:
             assert m.position == expected_pos
 
     def test_single_iter(self, tmp_path: Path, audio_file, offline_settings):
-        resonant.WINDOW_SIZE = 2
+        resonant.LOCALIZING_WINDOW = 2
         resonant.NUM_MICS = 3
         data = [1, 2, 3, 1, 2, 3, 1, 2, 3]
         file_path: Path = audio_file(data)
@@ -71,7 +71,7 @@ class TestOfflineAudioIter:
         assert np.array_equal(result, expected)
 
     def test_stop_condition_loop(self, tmp_path: Path, audio_file, offline_settings):
-        resonant.WINDOW_SIZE = 2
+        resonant.LOCALIZING_WINDOW = 2
         resonant.NUM_MICS = 3
         data = [1, 2, 3, 1, 2, 3, 1, 2, 3]
         file_path: Path = audio_file(data)
