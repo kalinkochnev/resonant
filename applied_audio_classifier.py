@@ -2,8 +2,8 @@ from librosa.feature import mfcc
 print("librosa.feature.mfcc")
 from librosa import load
 print("librosa.load")
-import tensorflow.keras as keras
-print("keras")
+import tflite_runtime.interpreter as tflite
+print("tflite")
 import time
 print("time")
 import numpy as np
@@ -66,7 +66,40 @@ MAPPING = {
 #     return(amplitude)
 
 
-def predict_sound(file_path, algo, n_mfcc=13, n_fft=2048, hop_length=512):
+def predict_sound(file_path, n_mfcc=13, n_fft=2048, hop_length=512):
+    print("starting loading process...")
+    signal, sr = load(file_path, sr=SAMPLE_RATE, mono=True)
+    start = time.time()
+    print("audio loaded")
+    mfcc_data = mfcc(signal, SAMPLE_RATE, n_fft=n_fft, n_mfcc=n_mfcc, hop_length=hop_length)
+    array = np.zeros((1, 2262))
+    sample_array = mfcc_data.T.flatten()
+    print("MFCCs calculated")
+    array[0, 0:sample_array.size] = sample_array
+    
+    interpreter = tflite.Interpreter(model_path='model.tflite')
+    interpreter.allocate_tensors()
+
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    input_shape = input_details[0]['shape']
+    input_data = array
+    input_data = input_data.astype('float32')
+    print(input_data)
+    interpreter.set_tensor(input_details[0]['index'], input_data)
+
+    interpreter.invoke()
+
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+    time_elapsed_milliseconds = int((time.time() - start)*1000)
+    print(time_elapsed_milliseconds)
+    print(output_data.max()*100)
+    print(MAPPING[output_data.argmax()])
+    return output_data
+
+
+'''def predict_sound(file_path, algo, n_mfcc=13, n_fft=2048, hop_length=512):
     print("got here 1")
     signal, sr = load(file_path, sr=SAMPLE_RATE, mono=True)
     start = time.time()
@@ -82,22 +115,18 @@ def predict_sound(file_path, algo, n_mfcc=13, n_fft=2048, hop_length=512):
     print(words, np.max(algo.predict(array)))
     print("got here 5")
     time_elapsed_milliseconds = int((time.time() - start)*1000)
-    print('calculation time: ' + str(time_elapsed_milliseconds) + ' milliseconds')
+    print('calculation time: ' + str(time_elapsed_milliseconds) + ' milliseconds')'''
 
 
 if __name__ == '__main__':
     print("started")
-    model = keras.models.load_model('classifier_algo_2/')
-    print("loaded")
-    predict_sound('dog_bark_mic_mono.wav', model)
-    predict_sound('dog_bark_mic_mono.wav', model)
-    predict_sound('dog_bark_mic_mono.wav', model)
-    predict_sound('dog_bark_mic_mono.wav', model)
-    predict_sound('dog_bark_mic_mono.wav', model)
-    predict_sound('dog_bark_mic_mono.wav', model)
-    predict_sound('dog_bark_mic_mono.wav', model)
-    predict_sound('dog_bark_mic_mono.wav', model)
-    predict_sound('dog_bark_mic_mono.wav', model)
-    predict_sound('dog_bark_mic_mono.wav', model)
-    predict_sound('dog_bark_mic_mono.wav', model)
-    predict_sound('dog_bark_mic_mono.wav', model)
+    predict_sound('vehicle041.wav')
+    predict_sound('dog_bark_mic_mono.wav')
+    predict_sound('vehicle041.wav')
+    predict_sound('dog_bark_mic_mono.wav')
+    predict_sound('vehicle041.wav')
+    predict_sound('dog_bark_mic_mono.wav')
+    predict_sound('vehicle041.wav')
+    predict_sound('dog_bark_mic_mono.wav')
+
+
