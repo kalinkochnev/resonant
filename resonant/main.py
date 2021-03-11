@@ -16,13 +16,13 @@ if __name__ == "__main__":
     live_audio = RealtimeAudio(audio_device=0)
     src_scheduler = SourceScheduler(ml)
 
+
     for channels in live_audio:
         localizer.update_signals(channels)
         src  = localizer.run_algorithm()
 
         src_scheduler.ingest(src)
 
-        # localizer.display_srcs()
 
 
 

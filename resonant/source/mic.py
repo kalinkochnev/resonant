@@ -65,7 +65,7 @@ class Source:
     def __init__(self, polar_angle, audio: np.ndarray):
         self.id = None
         self.position: SphericalPt = SphericalPt.angle_only(polar_angle)
-        self.name = None
+        self.name = "" # TODO FIX
 
         temp_arr = np.empty(resonant.MAX_ML_SAMPLES)
         temp_arr[:] = np.nan
@@ -79,7 +79,7 @@ class Source:
     @property
     def can_ml_analyze(self):
         """Only when the source gets enough samples can it get analyzed"""
-        unfilled_count = np.count_nonzero(~np.isnan(self.audio))
+        unfilled_count = np.count_nonzero(np.isnan(self.audio))
         return unfilled_count >= resonant.MIN_ML_SAMPLES and unfilled_count <= resonant.MAX_ML_SAMPLES
 
     @property

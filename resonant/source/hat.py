@@ -1,8 +1,8 @@
 import time
 import threading
-import libraries.Adafruit_SSD1306 as Adafruit_SSD1306
-from libraries.imusensor.MPU9250 import MPU9250
-import libraries.smbus as smbus
+import Adafruit_SSD1306
+from imusensor.MPU9250 import MPU9250
+import smbus as smbus
 import math
 
 from PIL import Image, ImageFont, ImageDraw
@@ -14,7 +14,7 @@ class Hat():
         self.disp.begin()
         self.disp.clear()
         self.disp.display()
-        self.font = ImageFont.truetype('../assets/freepixel-modified.ttf', 16)
+        self.font = ImageFont.truetype('assets/freepixel-modified.ttf', 16)
 
         # Give a helpful message to the user
         self.draw(-1, "Starting Up")
@@ -31,7 +31,7 @@ class Hat():
         self.imu.caliberateGyro()
 
     def lock(self, lock_angle, sound_name):
-        self.lock_angle = lock_angle
+        self.lock_angle = lock_angle + 90
         self.sound_name = sound_name
 
         # This method is to be run on a separate thread
@@ -116,11 +116,3 @@ class Hat():
         self.disp.image(imageRotated)
         self.disp.display()
 
-
-hat = Hat()
-
-hat.lock(90, "Duck Honk")
-time.sleep(5)
-hat.lock(60, "Goose")
-time.sleep(2)
-hat.unlock()
