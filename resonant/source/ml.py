@@ -1,15 +1,19 @@
 from queue import Queue
 from typing import Iterable, List
+import source.constants as resonant
 
 import numpy as np
-import tflite_runtime.interpreter as tflite
-from librosa import load
-from librosa.feature import mfcc
 
-import source.constants as resonant
+if resonant.ON_RP4:
+    import tflite_runtime.interpreter as tflite
+    from librosa import load
+    from librosa.feature import mfcc
+
 from source.geometry import SphericalPt
 from source.hat import Hat
 from source.mic import Source
+
+import scipy.io.wavfile
 
 
 class AudioClassifier:
@@ -31,13 +35,13 @@ class AudioClassifier:
         self.interpreter = tflite.Interpreter(model_path='assets/model.tflite')
         self.interpreter.allocate_tensors()
 
-
         self.input_details = self.interpreter.get_input_details()
         self.output_details = self.interpreter.get_output_details()
         print("Finished loading ")
 
     def predict_sound(self, signal, n_mfcc=13, n_fft=2048, hop_length=512):
         signal = np.nan_to_num(signal)
+        # scipy.io.wavfile.write("ml.wav", resonant.SAMPLING_RATE, signal)
         mfcc_data = mfcc(signal, resonant.ML_SAMPLING_RATE,
                         n_fft=n_fft, n_mfcc=n_mfcc, hop_length=hop_length)
         array = np.zeros((1, 2262))
@@ -47,6 +51,7 @@ class AudioClassifier:
         # input_shape = input_details[0]['shape']
         input_data = array
         input_data = input_data.astype('float32')
+        # scipy.io.wavfile.write("ml_f32.wav", resonant.SAMPLING_RATE, input_data)
         self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
 
         self.interpreter.invoke()
@@ -60,7 +65,8 @@ class AudioClassifier:
 
         results = self.predict_sound(source.audio)
         source.name = self.MAPPING[results.argmax()]
-        print(source.audio.size / resonant.SAMPLING_RATE)
+        return source
+        return source
         return source
 
         # if self.is_confident(results):
@@ -92,16 +98,10 @@ class SourceScheduler:
         if unidentifed is not None:
             self.update_equiv_src(unidentifed)
         self.filter_srcs(unidentifed)
-        # print([src.id for src in self.sources])
 
         youngest: Source = self.max_life_src
-        if youngest is None:
-            # self.hat.unlock(clear=True)
-            pass
-        else:
-            # print(youngest.name)
+        if youngest is not None:
             self.hat.lock(youngest.position.polar, youngest.name)
-        # print([str(src) for src in self.sources])
 
     @property
     def max_life_src(self) -> Source:
@@ -116,17 +116,15 @@ class SourceScheduler:
         analyze with ML"""
         for src in self.sources:
             if src.position.within_margin(resonant.SOURCE_MARGIN, new_src.position):
-                src.update_audio(new_src.audio)
+                src.update_audio(new_src.audio[:resonant.LOCALIZING_WINDOW])
                 src.position = new_src.position
 
                 # It only runs ml if it has enough samples to analyze
                 if src.can_ml_analyze:
-                    # print("analyzing")
                     self.ml.analyze(src)
 
                     # This means the ML was conclusive and it keeps it alive
                     if src.name is not None:
-                        # print("reset")85fx
                         src.reset_cycles()
 
                 return

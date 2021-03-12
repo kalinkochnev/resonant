@@ -79,8 +79,10 @@ class Source:
     @property
     def can_ml_analyze(self):
         """Only when the source gets enough samples can it get analyzed"""
+        assert self.audio.size <= resonant.MAX_ML_SAMPLES, "Array exceeded ml"
         unfilled_count = np.count_nonzero(np.isnan(self.audio))
-        return unfilled_count >= resonant.MIN_ML_SAMPLES and unfilled_count <= resonant.MAX_ML_SAMPLES
+        filled_count = self.audio.size - unfilled_count
+        return filled_count >= resonant.MIN_ML_SAMPLES 
 
     @property
     def is_identified(self):
@@ -94,7 +96,11 @@ class Source:
         return self.cycles_lived >= self.cycles_to_live
 
     def update_audio(self, new_audio):
-        push_array(new_audio, self.audio, resonant.MAX_ML_SAMPLES)
+        print(f"Incoming audio {new_audio}")
+        self.audio = push_array(new_audio, self.audio, resonant.MAX_ML_SAMPLES)
+        unfilled_count = np.count_nonzero(np.isnan(self.audio))
+
+        print(f"Updated audio {self.audio}    num unfilled: {unfilled_count}")
 
     def set_inconclusive(self):
         self.cyc_to_live = resonant.CYCLES_INCONCLUSIVE

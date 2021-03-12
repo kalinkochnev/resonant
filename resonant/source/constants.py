@@ -2,12 +2,14 @@ import math
 import pyaudio
 import source.geometry as geom
 
+ON_RP4 = False
+
 V_SOUND = 343  # speed of sound
 NUM_SLICES = 20  # of slices to divide circle into
 MIC_SPACING = 0.062  # meters
-NUM_MICS = 4
+NUM_MICS = 2
 SAMPLING_RATE = 22050  # of samples taken per second for each channel
-LOCALIZING_WINDOW = round(0.1 * SAMPLING_RATE) # This is the number of samples to run the algorithm on
+LOCALIZING_WINDOW = round(3 * SAMPLING_RATE) # This is the number of samples to run the algorithm on
 # TODO not done
 # 0 means no interpolation, 1 means one additional index for each amplitude
 INTERPOLATION_AMOUNT = 0
@@ -27,7 +29,7 @@ ML_CONF_THRESH = 2 # # of standard deviations for a confidence to be to be concl
 ML_SAMPLING_RATE = SAMPLING_RATE
 
 # LOCALIZATON
-LOCALIZATION_CORRELATION_THRESHOLD = 1e20
+LOCALIZATION_CORRELATION_THRESHOLD = 0
 
 MIC_POSITIONS = [
     geom.SphericalPt(MIC_SPACING * math.sqrt(2), 5 * math.pi /4, 0),

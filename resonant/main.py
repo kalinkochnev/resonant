@@ -1,7 +1,7 @@
 from source.initialization import AudioIter, OfflineAudioIter, RealtimeAudio
 from source.algorithms import SourceLocalization
 from source.ml import SourceScheduler, AudioClassifier
-import source.constants as const
+import source.constants as resonant
 import pyaudio
 import numpy as np
 import time
@@ -11,17 +11,27 @@ import scipy.io.wavfile
 if __name__ == "__main__":
 
     # Init resources
-    ml = AudioClassifier()
-    localizer = SourceLocalization(AudioIter.initialize_mics())
-    live_audio = RealtimeAudio(audio_device=0)
-    src_scheduler = SourceScheduler(ml)
+    # ml = AudioClassifier()
+    # localizer = SourceLocalization(AudioIter.initialize_mics())
+    live_audio = RealtimeAudio()
+    # src_scheduler = SourceScheduler(ml)
+
+    try:
+        for channels in live_audio:
+            # localizer.update_signals(channels)
+            # src  = localizer.run_algorithm()
+
+            # src_scheduler.ingest(src)
+            # print(channels[0])
+            pass
+    except:
+        print(len(live_audio.blah))
+        # np.array(live_audio.blah[1::resonant.NUM_MICS].astype(np.int16)
+        scipy.io.wavfile.write("ml.wav", resonant.SAMPLING_RATE, live_audio.audio_channels[0].astype(np.int16))
+        time.sleep(2)
+        print('saved')
 
 
-    for channels in live_audio:
-        localizer.update_signals(channels)
-        src  = localizer.run_algorithm()
-
-        src_scheduler.ingest(src)
 
 
 

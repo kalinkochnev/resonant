@@ -1,8 +1,11 @@
 import time
 import threading
-import Adafruit_SSD1306
-from imusensor.MPU9250 import MPU9250
-import smbus as smbus
+import source.constants as resonant
+
+if resonant.ON_RP4:
+    import Adafruit_SSD1306
+    from imusensor.MPU9250 import MPU9250
+    import smbus as smbus
 import math
 
 from PIL import Image, ImageFont, ImageDraw
@@ -10,21 +13,22 @@ from PIL import Image, ImageFont, ImageDraw
 class Hat():
     def __init__(self):
         # Set up the display library, clear it and set the font
-        self.disp = Adafruit_SSD1306.SSD1306_128_64(rst=None)
-        self.disp.begin()
-        self.disp.clear()
-        self.disp.display()
-        self.font = ImageFont.truetype('assets/freepixel-modified.ttf', 16)
+        if resonant.ON_RP4:
+            self.disp = Adafruit_SSD1306.SSD1306_128_64(rst=None)
+            self.disp.begin()
+            self.disp.clear()
+            self.disp.display()
+            self.font = ImageFont.truetype('assets/freepixel-modified.ttf', 16)
 
-        # Give a helpful message to the user
-        self.draw(-1, "Starting Up")
+            # Give a helpful message to the user
+            self.draw(-1, "Starting Up")
 
-        # Set up the IMU
-        self.imu = MPU9250.MPU9250(smbus.SMBus(1), 0x68)
-        self.imu.begin()
+            # Set up the IMU
+            self.imu = MPU9250.MPU9250(smbus.SMBus(1), 0x68)
+            self.imu.begin()
 
-        # Make sure all threads are stopped
-        self.kill_thread = True
+            # Make sure all threads are stopped
+            self.kill_thread = True
 
     def calibrate(self):
         # Gyro is to be kept still during calibration

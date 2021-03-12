@@ -47,6 +47,7 @@ def test_equiv_src_new(sources):
 
 def test_equiv_src_existing(sources):
     # This has the sources not machine learning ready
+    resonant.MIN_ML_SAMPLES = 10
     ml = MLStub()
     scheduler = SourceScheduler(ml)
     scheduler.sources = sources
@@ -81,3 +82,25 @@ def test_src_filter(sources: List[Source]):
     sources[0].cycles_lived = 2
     sources[1].cycles_lived = 0
     
+@pytest.fixture
+def count_nan():
+    def count(audio):
+        unfilled_count = np.count_nonzero(np.isnan(audio))
+        return unfilled_count
+    return count
+
+def test_updates(count_nan):
+    resonant.MIN_ML_SAMPLES = 3
+    resonant.MAX_ML_SAMPLES = 8
+    src = Source(30, np.array([]))
+
+    assert src.can_ml_analyze is False
+    assert count_nan(src.audio) == resonant.MAX_ML_SAMPLES
+
+    additional = np.array([2, 2, 2, 2])
+    src.update_audio(additional)
+    expected = np.array([2, 2, 2, 2, np.nan, np.nan, np.nan, np.nan])
+
+    assert np.array_equal(src.audio, expected, equal_nan=True) is True
+    assert src.can_ml_analyze is True
+    assert count_nan(src.audio) == 4

@@ -1,11 +1,12 @@
 import math
 import queue
-from queue import Queue
+from queue import Queue, LifoQueue
 from typing import List
 
 import numpy as np
 import pyaudio
 import scipy.io.wavfile as wav
+from utils.arr import push_array
 from utils.arr import push_array
 
 import source.constants as resonant
@@ -46,12 +47,12 @@ class OfflineAudioIter(AudioIter):
         self.initialize_mics()
 
     @classmethod
-    def load_channels(self, path: str) -> List[np.ndarray]:
+    def load_channels(cls, path: str) -> List[np.ndarray]:
         rate, recording = wav.read(path)
         print(rate)
         assert rate == resonant.SAMPLING_RATE
         flattened = recording.flatten()
-        return self.split_into_channels(flattened)
+        return cls.split_into_channels(flattened)
 
     def __next__(self):
         signals: List[np.ndarray] = []
@@ -110,7 +111,7 @@ class RealtimeAudio(StreamProcessor):
         self.pyaudio = pyaudio.PyAudio()
         if audio_device is None:
             audio_device = self.choose_audio_device()
-
+        self.blah = []
         self.stream = self.pyaudio.open(format=resonant.AUDIO_FORMAT, channels=resonant.NUM_MICS,
                                         rate=resonant.SAMPLING_RATE, input=True,
                                         frames_per_buffer=resonant.AUDIO_FRAME_SIZE,
@@ -128,11 +129,12 @@ class RealtimeAudio(StreamProcessor):
     def stream_reader(self):
         def reader(in_data, frame_count, time_info, status):
             new_data = np.frombuffer(in_data, dtype=np.int16)
-
+            self.blah.extend(new_data.tolist())
+            print('extended')
             # Removes items from back of queue if it fills up
             if self.audio_queue.qsize() >= self.audio_queue.maxsize:
                 self.audio_queue.get()
-            self.audio_queue.put(new_data)
+            self.audio_queue.put((new_data))
 
             return (in_data, pyaudio.paContinue)
         return reader

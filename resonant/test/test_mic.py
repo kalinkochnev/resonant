@@ -74,4 +74,5 @@ class TestSource:
         assert src.can_ml_analyze is True
 
         src.audio = np.zeros(11)
-        assert src.can_ml_analyze is False
+        with pytest.raises(AssertionError) as exc_info:
+            src.can_ml_analyze
