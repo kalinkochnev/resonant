@@ -111,7 +111,6 @@ class RealtimeAudio(StreamProcessor):
         self.pyaudio = pyaudio.PyAudio()
         if audio_device is None:
             audio_device = self.choose_audio_device()
-        self.blah = []
         self.stream = self.pyaudio.open(format=resonant.AUDIO_FORMAT, channels=resonant.NUM_MICS,
                                         rate=resonant.SAMPLING_RATE, input=True,
                                         frames_per_buffer=resonant.AUDIO_FRAME_SIZE,
@@ -129,8 +128,6 @@ class RealtimeAudio(StreamProcessor):
     def stream_reader(self):
         def reader(in_data, frame_count, time_info, status):
             new_data = np.frombuffer(in_data, dtype=np.int16)
-            self.blah.extend(new_data.tolist())
-            print('extended')
             # Removes items from back of queue if it fills up
             if self.audio_queue.qsize() >= self.audio_queue.maxsize:
                 self.audio_queue.get()

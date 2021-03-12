@@ -7,29 +7,28 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 import scipy.io.wavfile
+from utils.arr import push_array
+from source.mic import Source
 
 if __name__ == "__main__":
 
     # Init resources
-    # ml = AudioClassifier()
-    # localizer = SourceLocalization(AudioIter.initialize_mics())
-    live_audio = RealtimeAudio()
-    # src_scheduler = SourceScheduler(ml)
+    ml = AudioClassifier()
+    localizer = SourceLocalization(AudioIter.initialize_mics())
+    live_audio = RealtimeAudio(audio_device=0)
+    src_scheduler = SourceScheduler(ml)
 
-    try:
-        for channels in live_audio:
-            # localizer.update_signals(channels)
-            # src  = localizer.run_algorithm()
+    signal = np.zeros(resonant.MAX_ML_SAMPLES)
+    for channels in live_audio:
+        localizer.update_signals(channels)
+        src = localizer.run_algorithm()
+        src_scheduler.ingest(src)
 
-            # src_scheduler.ingest(src)
-            # print(channels[0])
-            pass
-    except:
-        print(len(live_audio.blah))
+        # print(len(live_audio.blah))
         # np.array(live_audio.blah[1::resonant.NUM_MICS].astype(np.int16)
-        scipy.io.wavfile.write("ml.wav", resonant.SAMPLING_RATE, live_audio.audio_channels[0].astype(np.int16))
-        time.sleep(2)
-        print('saved')
+        # scipy.io.wavfile.write("ml.wav", resonant.SAMPLING_RATE, live_audio.audio_channels[0].astype(np.int16))
+        # time.sleep(2)
+        # print('saved')
 
 
 

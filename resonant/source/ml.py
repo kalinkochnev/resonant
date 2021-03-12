@@ -40,7 +40,16 @@ class AudioClassifier:
         print("Finished loading ")
 
     def predict_sound(self, signal, n_mfcc=13, n_fft=2048, hop_length=512):
-        signal = np.nan_to_num(signal)
+        signal_raw = np.nan_to_num(signal).astype(np.int16)
+        scipy.io.wavfile.write("/run/shm/ml.wav", resonant.SAMPLING_RATE, signal_raw)
+        scipy.io.wavfile.write("ml.wav", resonant.SAMPLING_RATE, signal_raw)
+        signal, sr = load("/run/shm/ml.wav")
+        # n_bytes = 2 # the number of bytes per sample 
+        # fmt = "<i{:d}".format(n_bytes)
+        # scale = 1.0 / float(1 << ((8 * n_bytes) - 1))
+        # signal = scale * np.frombuffer(signal, fmt).astype(np.float32)
+        # signal = signal[:2262]
+
         # scipy.io.wavfile.write("ml.wav", resonant.SAMPLING_RATE, signal)
         mfcc_data = mfcc(signal, resonant.ML_SAMPLING_RATE,
                         n_fft=n_fft, n_mfcc=n_mfcc, hop_length=hop_length)
@@ -50,8 +59,8 @@ class AudioClassifier:
 
         # input_shape = input_details[0]['shape']
         input_data = array
-        input_data = input_data.astype('float32')
         # scipy.io.wavfile.write("ml_f32.wav", resonant.SAMPLING_RATE, input_data)
+        input_data = input_data.astype("float32")
         self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
 
         self.interpreter.invoke()
@@ -63,11 +72,10 @@ class AudioClassifier:
     def analyze(self, source: Source) -> Source:
         """This decides whether to mark a sound as conclusive or not"""
 
-        results = self.predict_sound(source.audio)
+        """results = self.predict_sound(source.audio)
         source.name = self.MAPPING[results.argmax()]
-        return source
-        return source
-        return source
+        print(f"Sound: {source.name}  confidences: {results}")
+        return source"""
 
         # if self.is_confident(results):
         # return None
@@ -120,13 +128,13 @@ class SourceScheduler:
                 src.position = new_src.position
 
                 # It only runs ml if it has enough samples to analyze
-                if src.can_ml_analyze:
-                    self.ml.analyze(src)
+                """if src.can_ml_analyze:
+                    # self.ml.analyze(src)
 
                     # This means the ML was conclusive and it keeps it alive
                     if src.name is not None:
                         src.reset_cycles()
-
+                """
                 return
 
         # If there are no equivalent sources, add it to the tracked sources

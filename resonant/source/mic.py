@@ -96,11 +96,7 @@ class Source:
         return self.cycles_lived >= self.cycles_to_live
 
     def update_audio(self, new_audio):
-        print(f"Incoming audio {new_audio}")
         self.audio = push_array(new_audio, self.audio, resonant.MAX_ML_SAMPLES)
-        unfilled_count = np.count_nonzero(np.isnan(self.audio))
-
-        print(f"Updated audio {self.audio}    num unfilled: {unfilled_count}")
 
     def set_inconclusive(self):
         self.cyc_to_live = resonant.CYCLES_INCONCLUSIVE
