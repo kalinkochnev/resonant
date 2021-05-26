@@ -41,6 +41,6 @@ fi
 
 . ./env/bin/activate
 echo "----------------------------- Installing pip packages -----------------------------"
-sudo pip3 install -r requirements.txt
+pip3 install -r requirements.txt
 
 echo "----------------------------- All done! -----------------------------"
