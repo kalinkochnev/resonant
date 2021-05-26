@@ -1,75 +1,45 @@
-import time
+import logging
+import math
+import queue
 import threading
+import time
+
+from PIL import Image, ImageDraw, ImageFont
+
 import source.constants as resonant
 
 if resonant.ON_RP4:
     import Adafruit_SSD1306
+    import smbus
     from imusensor.MPU9250 import MPU9250
-    import smbus as smbus
-import math
 
-from PIL import Image, ImageFont, ImageDraw
 
-class Hat():
+class IMU(MPU9250.MPU9250, threading.Thread):
     def __init__(self):
+        logging.info("Setting up imu")
+        super().__init__(smbus.SMBus(1), 0x68)
+        logging.info("Calibrating imu")
+        self.imu.begin()
+
+
+class Display(Adafruit_SSD1306.SSD1306_128_64):
+    def __init__(self):
+        logging.info("Setting up display")
+
         # Set up the display library, clear it and set the font
-        if resonant.ON_RP4:
-            self.disp = Adafruit_SSD1306.SSD1306_128_64(rst=None)
-            self.disp.begin()
-            self.disp.clear()
-            self.disp.display()
-            self.font = ImageFont.truetype('assets/freepixel-modified.ttf', 16)
+        super().__init__(rst=None)
+        self.begin()
+        self.clear()
+        self.display()
 
-            # Give a helpful message to the user
-            self.draw(-1, "Starting Up")
+        self.font = ImageFont.truetype('assets/freepixel-modified.ttf', 16)
+        self.pixel_buffer = Image.new('1', (self.width, self.height))
+        self.drawer = ImageDraw.Draw(self.pixel_buffer)
+        self.clear_buffer()
 
-            # Set up the IMU
-            self.imu = MPU9250.MPU9250(smbus.SMBus(1), 0x68)
-            self.imu.begin()
-
-            # Make sure all threads are stopped
-            self.kill_thread = True
-
-    def calibrate(self):
-        # Gyro is to be kept still during calibration
-        self.imu.caliberateGyro()
-
-    def lock(self, lock_angle, sound_name):
-        self.lock_angle = lock_angle + 90
-        self.sound_name = sound_name
-
-        # This method is to be run on a separate thread
-        def angle_lock():
-            offset = 0
-            start = time.time()
-            while True:
-                # Calculate loop time to use when integrating gyroscope data
-                dt = time.time() - start
-                start = time.time()
-
-                # Get the latest data
-                self.imu.readSensor()
-
-                # Add w*dt = da to offset value
-                offset += self.imu.GyroVals[2] * dt * (180/math.pi)
-
-                # Display with the new angle
-                self.draw(self.lock_angle + offset, self.sound_name)
-
-                # Check if the thread has been killed
-                if self.kill_thread:
-                    break
-            return None
-
-        # Make sure no threads are running before staring a new one, no need to clear the display here
-        self.unlock(clear=False)
-
-        # Create the thread object
-        self.lock_thread = threading.Thread(target=angle_lock)
-
-        # Make sure the kill flag is off and then start the thread
-        self.kill_thread = False
-        self.lock_thread.start()
+        self.padding = 5
+        self.ellipsis_width = self.width-self.padding
+        self.ellipsis_height = self.height-self.padding - 20
 
     def unlock(self, clear=True):
         # Kill the thread if its on
@@ -81,42 +51,122 @@ class Hat():
         if clear:
             self.draw(-1, -1)
 
-    def draw(self, angle, sound_name):
-        width = self.disp.width
-        height = self.disp.height
-        image = Image.new('1', (width, height))
+    def clear_buffer(self):
+        """Draws a black rectangle to clear the image that is drawn to the screen"""
+        self.drawer.rectangle(
+            (0, 0, self.width, self.height), outline=0, fill=0)
 
-        # Get drawing object to draw on image.
-        draw = ImageDraw.Draw(image)
-        padding = 5
-        ellipsis_width = width-padding
-        ellipsis_height = height-padding - 20
+    def draw_text(self, text, update=False):
+        # Add text to the pixel buffer
+        char_width = 8
+        x = (self.width - (len(text) * char_width)) / 2
+        self.drawer.text((x, self.height-18), text,  font=self.font, fill=255)
 
-        # Clear the screen
-        draw.rectangle((0, 0, width, height), outline=0, fill=0)
+        if update:
+            self.update()
+
+    def draw_ellipse(self):
+        # Draw the base ellipse and direction arrow
+        self.drawer.ellipse((padding, padding, ellipsis_width,
+                             ellipsis_height), outline=255, fill=0)
+        self.drawer.polygon((self.width/2 - 8, 24, self.width/2 + 8, 24,
+                             self.width/2, 17), outline=255, fill=0)
+
+    def draw_position(self, angle):
+        # Draw the dot indicating position
+        a = angle*(math.pi/180)
+        x = math.cos(a) * ((self.ellipsis_width-self.padding)/2) + self.width/2
+        y = -math.sin(a) * ((self.ellipsis_height-self.padding) /
+                            2) + (self.height-20)/2
+        self.drawer.ellipse((x-5, y-5, x+5, y+5), outline=255, fill=1)
+
+    def update(self):
+        imageRotated = self.pixel_buffer.rotate(180)
+        self.image(imageRotated)
+        self.display()
 
 
-        if angle != -1:
-            # Draw the base ellipse and direction arrow
-            draw.ellipse((padding, padding, ellipsis_width,
-                          ellipsis_height), outline=255, fill=0)
-            draw.polygon((width/2 - 8, 24, width/2 + 8, 24,
-                          width/2, 17), outline=255, fill=0)
+class SoundLock(threading.Thread):
+    def __init__(self, imu: IMU, display: Display):
+        super(threading.Thread, self).__init__()
+        self.sound_queue: "queue.LifoQueue[dict]" = queue.LifoQueue()
+        self.imu = imu
+        self.display = display
 
-            # Draw the dot indicating position
-            a = angle*(math.pi/180)
-            x = math.cos(a) * ((ellipsis_width-padding)/2) + width/2
-            y = -math.sin(a) * ((ellipsis_height-padding)/2) + (height-20)/2
-            draw.ellipse((x-5, y-5, x+5, y+5), outline=255, fill=1)
+        self.rel_orientation = 0
+        self.abs_orientation = 0
 
-        if sound_name != -1:
-            # Display the text
-            char_width = 8
-            x = (width - (len(sound_name) * char_width)) / 2
-            draw.text((x, height-18), sound_name,  font=self.font, fill=255)
+    def display_sound(self, angle, sound_name):
+        self.display.clear_buffer()
+        self.display.draw_ellipse()
+        self.display.draw_position(angle)
+        self.display.draw_text(sound_name)
+        self.display.update()
+        logging.debug(f"Sound: {sound_name} was displayed at {angle} degrees")
 
-        # Push the image to the display
-        imageRotated = image.rotate(180)
-        self.disp.image(imageRotated)
-        self.disp.display()
+    def update_sound(self, angle, sound_name=''):
+        self.sound_queue.put({'angle': angle, 'name': sound_name})
 
+    @property
+    def tracked_sound(self):
+        """Retrieves the newest sound direction to track from the queue"""
+        if self.sound_queue.empty():
+            return None
+
+        sound_info = self.sound_queue.get()
+
+        # clears queue
+        while not self.sound_queue.empty():
+            self.sound_queue.get()
+
+        return sound_info
+
+    def run(self):
+        logging.info("Sound lock thread started")
+
+        prev_sound = None
+        start_time = time.time()
+        while True:
+            start_time = self.integrate_gyro(start_time)
+
+            # Reset relative orientation if sound changes/new sound angle of arrival is available
+            new_sound = self.tracked_sound
+            if prev_sound != new_sound:
+                logging.debug(
+                    "New sound angle available, zeroing relative orientation")
+                self.reset_rel_orientation()
+
+            # If a sound stays as the "current sound", keep integrating gyro data
+            if self.sound_queue.empty() or prev_sound is None:
+                continue
+
+            self.display_sound(
+                new_sound['angle'] + self.rel_orientation + resonant.IMU_ANGLE_OFFSET, new_sound['name'])
+            prev_sound = new_sound
+
+    def integrate_gyro(self, start_time):
+        """This continuously integrates the gyro to update the absolute orientation and returns the new start time and differential angle"""
+        # Calculate loop time to use when integrating gyroscope data
+        dt = time.time() - start_time
+        new_start_time = time.time()
+        self.imu.readSensor()
+
+        # Add angular velocity * dt = da to offset value
+        differentialAngle = self.imu.GyroVals[2] * dt * (180/math.pi)
+        self.orientation += differentialAngle
+        self.rel_orientation += differentialAngle
+
+        logging.debug(
+            f"Absolute orientation: {self.abs_orientation} -- Relative orientation: {self.rel_orientation}")
+        return (new_start_time, differentialAngle)
+
+    def reset_rel_orientation(self):
+        self.rel_orientation = 0
+
+
+class Hat():
+    def __init__(self):
+        self.display = Display()
+        self.display.draw_text("Starting up...", update=True)
+
+        self.imu = IMU()
