@@ -18,7 +18,7 @@ class Mic:
         """Preallocates empty array and inserts previous array # of indices left or right
         with values to fill in the empty spots."""
         self.audio_shift += round(seconds *
-                                  resonant.SAMPLING_RATE)  # of samples in that span of time
+                                  resonant.AUDIO_SAMPLING_RATE)  # of samples in that span of time
 
         shifted = np.empty_like(self.signal)
         if self.audio_shift > 0:

@@ -1,16 +1,14 @@
 import math
-import queue
-from queue import Queue, LifoQueue
+from queue import LifoQueue, Queue
 from typing import List
 
 import numpy as np
 import pyaudio
 import scipy.io.wavfile as wav
-from utils.arr import push_array
-from utils.arr import push_array
 
 import source.constants as resonant
 from source.mic import Mic
+from utils.arr import push_array
 
 
 class AudioIter:
@@ -73,10 +71,10 @@ class StreamProcessor:
     def __init__(self):
         # we make the queue size just slightly higher so we can take whatever doesn't divide easily and add that to the window to top it off
         max_queue_size = math.ceil(
-            resonant.LARGE_WINDOW / resonant.AUDIO_FRAME_SIZE)
+            resonant.FULL_WINDOW / resonant.AUDIO_FRAME_SIZE)
         self.audio_queue = Queue(maxsize=max_queue_size)
         self.audio_channels: List[np.ndarray] = [
-            np.zeros(resonant.LARGE_WINDOW) for i in range(resonant.NUM_MICS)
+            np.zeros(resonant.FULL_WINDOW) for i in range(resonant.NUM_MICS)
         ]
 
     def flatten_queue(self):
@@ -90,7 +88,7 @@ class StreamProcessor:
             flattened_window = np.append(flattened_window, chunk)
 
         if num_chunks == self.audio_queue.maxsize:
-            buffer_missing_samples = resonant.LARGE_WINDOW % resonant.AUDIO_FRAME_SIZE
+            buffer_missing_samples = resonant.FULL_WINDOW % resonant.AUDIO_FRAME_SIZE
 
             # This fills in the readings for the # of mics to fill in the rest of the window
             leftover = self.audio_queue.get(
@@ -103,7 +101,7 @@ class StreamProcessor:
         # This does the equivalent of pushing new data to each channel
         channels = AudioIter.split_into_channels(data)
         for chan, new_audio in zip(self.audio_channels, channels):
-            push_array(new_audio, chan, resonant.LARGE_WINDOW)
+            push_array(new_audio, chan, resonant.FULL_WINDOW)
 
 class RealtimeAudio(StreamProcessor):
     def __init__(self, audio_device=None):
@@ -112,7 +110,7 @@ class RealtimeAudio(StreamProcessor):
         if audio_device is None:
             audio_device = self.choose_audio_device()
         self.stream = self.pyaudio.open(format=resonant.AUDIO_FORMAT, channels=resonant.NUM_MICS,
-                                        rate=resonant.SAMPLING_RATE, input=True,
+                                        rate=resonant.AUDIO_SAMPLING_RATE, input=True,
                                         frames_per_buffer=resonant.AUDIO_FRAME_SIZE,
                                         stream_callback=self.stream_reader())
 

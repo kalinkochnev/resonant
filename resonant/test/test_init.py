@@ -23,7 +23,7 @@ class TestBaseAudioIter:
 def audio_file(tmp_path):
     def nested(data: List):
         file_path = tmp_path / "test.wav"
-        wav.write(str(file_path), resonant.SAMPLING_RATE, np.array(data))
+        wav.write(str(file_path), resonant.AUDIO_SAMPLING_RATE, np.array(data))
         return file_path
     return nested
 

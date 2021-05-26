@@ -1,19 +1,17 @@
 from queue import Queue
 from typing import Iterable, List
-import source.constants as resonant
 
-import numpy as np
+import source.constants as resonant
 
 if resonant.ON_RP4:
     import tflite_runtime.interpreter as tflite
-    from librosa import load
-    from librosa.feature import mfcc
-
-from source.geometry import SphericalPt
-from source.hat import Hat
-from source.mic import Source
 
 import scipy.io.wavfile
+import numpy as np
+
+from source.geometry import SphericalPt
+from source.hat import Display
+from source.mic import Source
 
 
 class AudioClassifier:
@@ -41,8 +39,8 @@ class AudioClassifier:
 
     def predict_sound(self, signal, n_mfcc=13, n_fft=2048, hop_length=512):
         signal_raw = np.nan_to_num(signal).astype(np.int16)
-        scipy.io.wavfile.write("/run/shm/ml.wav", resonant.SAMPLING_RATE, signal_raw)
-        scipy.io.wavfile.write("ml.wav", resonant.SAMPLING_RATE, signal_raw)
+        scipy.io.wavfile.write("/run/shm/ml.wav", resonant.AUDIO_SAMPLING_RATE, signal_raw)
+        scipy.io.wavfile.write("ml.wav", resonant.AUDIO_SAMPLING_RATE, signal_raw)
         signal, sr = load("/run/shm/ml.wav")
         # n_bytes = 2 # the number of bytes per sample 
         # fmt = "<i{:d}".format(n_bytes)
@@ -91,7 +89,7 @@ class AudioClassifier:
 class SourceScheduler:
     def __init__(self, ml: AudioClassifier):
         self.sources: List[Source] = []
-        self.hat = Hat()
+        self.hat = Display()
         self.ml = ml
 
     @property
