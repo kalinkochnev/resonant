@@ -133,3 +133,4 @@ dmypy.json
 test.gif
 # Pycharm ignore
 .idea/
+resonant/assets/model.tflite

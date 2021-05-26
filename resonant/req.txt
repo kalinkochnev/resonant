@@ -1,22 +1,8 @@
-# Screen library
-Adafruit-GPIO==1.0.3
-Adafruit-PureIO==1.1.8
-Adafruit-SSD1306==1.6.2
 
-# IMU Sensor
-imusensor==1.0.1 
-spidev==3.5
+numpy
+pyaudio
+scipy
 
-# python typing libraries
-mypy==0.812
-mypy-extensions==0.4.3
-typed-ast==1.4.3
-typing-extensions==3.10.0.0
-
-# Math libaries
-numpy==1.20.3
-scipy==1.6.3
-
-# Audio library
-PyAudio==0.2.11
-
+tflite_runtime
+adafruit-circuitpython-ssd1306
+pytest
