@@ -1,3 +1,4 @@
 numpy==1.20.3
 PyAudio==0.2.11
 scipy==1.6.3
+Pillow==8.2.0

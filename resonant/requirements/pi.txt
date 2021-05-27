@@ -17,3 +17,4 @@ RPi.GPIO==0.7.0
 sysv-ipc==1.1.0
 tflite-runtime==2.4.0
 smbus
+easydict==1.9

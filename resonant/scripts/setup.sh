@@ -8,6 +8,7 @@ sudo apt-get update
 REQUIRED_PACKAGES=( 
     python3 python3-pip python3-venv git python3-dev
     libssl-dev libatlas-base-dev # Numpy
+    i2c-tools # imu
     libopenjp2-7 libtiff5 # Pillow
     portaudio19-dev python3-pyaudio # libportaudio0 libportaudio2 libportaudiocpp0 libasound2-dev #Pyaudio
 )
@@ -17,6 +18,10 @@ REQUIRED_PACKAGES=(
 # cd seeed-voicecard
 # sudo ./install.sh
 # sudo reboot
+
+# ALSO
+# Change the i2c speed so the display/gyro refreshes faster
+# See https://www.raspberrypi-spy.co.uk/2018/02/change-raspberry-pi-i2c-bus-speed/
 
 function checkOrInstall() {
     REQUIRED_PKG=$1

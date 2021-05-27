@@ -1,4 +1,4 @@
-import logging
+# import logging
 import math
 import queue
 import threading
@@ -16,15 +16,15 @@ if resonant.ON_RP4:
 
 class IMU(MPU9250.MPU9250, threading.Thread):
     def __init__(self):
-        logging.info("Setting up imu")
+        # logging.info("Setting up imu")
         super().__init__(smbus.SMBus(1), 0x68)
-        logging.info("Calibrating imu")
-        self.imu.begin()
+        # logging.info("Calibrating imu")
+        self.begin()
 
 
 class Display(Adafruit_SSD1306.SSD1306_128_64):
     def __init__(self):
-        logging.info("Setting up display")
+        # logging.info("Setting up display")
 
         # Set up the display library, clear it and set the font
         super().__init__(rst=None)
@@ -40,16 +40,6 @@ class Display(Adafruit_SSD1306.SSD1306_128_64):
         self.padding = 5
         self.ellipsis_width = self.width-self.padding
         self.ellipsis_height = self.height-self.padding - 20
-
-    def unlock(self, clear=True):
-        # Kill the thread if its on
-        if not self.kill_thread:
-            self.kill_thread = True
-            self.lock_thread.join()
-
-        # Clear the screen if not specified otherwise
-        if clear:
-            self.draw(-1, -1)
 
     def clear_buffer(self):
         """Draws a black rectangle to clear the image that is drawn to the screen"""
@@ -67,8 +57,8 @@ class Display(Adafruit_SSD1306.SSD1306_128_64):
 
     def draw_ellipse(self):
         # Draw the base ellipse and direction arrow
-        self.drawer.ellipse((padding, padding, ellipsis_width,
-                             ellipsis_height), outline=255, fill=0)
+        self.drawer.ellipse((self.padding, self.padding, self.ellipsis_width,
+                             self.ellipsis_height), outline=255, fill=0)
         self.drawer.polygon((self.width/2 - 8, 24, self.width/2 + 8, 24,
                              self.width/2, 17), outline=255, fill=0)
 
@@ -88,13 +78,17 @@ class Display(Adafruit_SSD1306.SSD1306_128_64):
 
 class SoundLock(threading.Thread):
     def __init__(self, imu: IMU, display: Display):
-        super(threading.Thread, self).__init__()
+        super(SoundLock, self).__init__()
         self.sound_queue: "queue.LifoQueue[dict]" = queue.LifoQueue()
         self.imu = imu
         self.display = display
+        self.stopped = False
 
         self.rel_orientation = 0
         self.abs_orientation = 0
+
+        self._current_sound = None
+        self.sound_changed = False
 
     def display_sound(self, angle, sound_name):
         self.display.clear_buffer()
@@ -102,47 +96,48 @@ class SoundLock(threading.Thread):
         self.display.draw_position(angle)
         self.display.draw_text(sound_name)
         self.display.update()
-        logging.debug(f"Sound: {sound_name} was displayed at {angle} degrees")
+        # logging.debug(f"Sound: {sound_name} was displayed at {angle} degrees")
 
     def update_sound(self, angle, sound_name=''):
         self.sound_queue.put({'angle': angle, 'name': sound_name})
 
     @property
-    def tracked_sound(self):
-        """Retrieves the newest sound direction to track from the queue"""
+    def curr_sound(self):
+        """Retrieves the newest sound from the queue if there is one. If not, keeps previous sound"""
         if self.sound_queue.empty():
-            return None
+            self.sound_changed = False
+            return self._current_sound
 
-        sound_info = self.sound_queue.get()
+        self._current_sound = self.sound_queue.get()
+        self.sound_changed = True
 
         # clears queue
         while not self.sound_queue.empty():
             self.sound_queue.get()
 
-        return sound_info
+        return self._current_sound
 
     def run(self):
-        logging.info("Sound lock thread started")
+        # logging.info("Sound lock thread started")
 
-        prev_sound = None
         start_time = time.time()
-        while True:
-            start_time = self.integrate_gyro(start_time)
-
-            # Reset relative orientation if sound changes/new sound angle of arrival is available
-            new_sound = self.tracked_sound
-            if prev_sound != new_sound:
-                logging.debug(
-                    "New sound angle available, zeroing relative orientation")
-                self.reset_rel_orientation()
-
-            # If a sound stays as the "current sound", keep integrating gyro data
-            if self.sound_queue.empty() or prev_sound is None:
+        while not self.stopped:
+            curr_sound = self.curr_sound
+            start_time, diffAngle = self.integrate_gyro(start_time)
+            print(f"Rel: {self.rel_orientation}  abs: {self.abs_orientation}")
+            if curr_sound is None:
                 continue
 
-            self.display_sound(
-                new_sound['angle'] + self.rel_orientation + resonant.IMU_ANGLE_OFFSET, new_sound['name'])
-            prev_sound = new_sound
+            # Reset relative orientation if sound changes/new sound angle of arrival is available
+            if self.sound_changed:
+                # logging.debug("New sound angle available, zeroing relative orientation")
+                self.reset_rel_orientation()
+
+            # Displays sound relative to where the user is looking
+            self.display_sound(curr_sound['angle'] + self.rel_orientation, curr_sound['name'])
+
+    def stop(self):
+        self.stopped = True
 
     def integrate_gyro(self, start_time):
         """This continuously integrates the gyro to update the absolute orientation and returns the new start time and differential angle"""
@@ -153,11 +148,14 @@ class SoundLock(threading.Thread):
 
         # Add angular velocity * dt = da to offset value
         differentialAngle = self.imu.GyroVals[2] * dt * (180/math.pi)
-        self.orientation += differentialAngle
-        self.rel_orientation += differentialAngle
+        self.abs_orientation += differentialAngle
+        self.abs_orientation = self.abs_orientation % 360
 
-        logging.debug(
-            f"Absolute orientation: {self.abs_orientation} -- Relative orientation: {self.rel_orientation}")
+        self.rel_orientation += differentialAngle
+        self.rel_orientation = self.rel_orientation
+
+        # # logging.debug(
+        #     f"Absolute orientation: {self.abs_orientation} -- Relative orientation: {self.rel_orientation}")
         return (new_start_time, differentialAngle)
 
     def reset_rel_orientation(self):
@@ -170,3 +168,4 @@ class Hat():
         self.display.draw_text("Starting up...", update=True)
 
         self.imu = IMU()
+        self.sound_lock = SoundLock(self.imu, self.display)
