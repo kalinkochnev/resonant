@@ -1,4 +1,3 @@
-# import logging
 import math
 import queue
 import threading
@@ -7,6 +6,7 @@ import time
 from PIL import Image, ImageDraw, ImageFont
 
 import source.constants as resonant
+import logging
 
 if resonant.ON_RP4:
     import Adafruit_SSD1306
@@ -16,15 +16,15 @@ if resonant.ON_RP4:
 
 class IMU(MPU9250.MPU9250, threading.Thread):
     def __init__(self):
-        # logging.info("Setting up imu")
+        logging.info("Setting up imu")
         super().__init__(smbus.SMBus(1), 0x68)
-        # logging.info("Calibrating imu")
+        logging.info("Calibrating imu")
         self.begin()
 
 
 class Display(Adafruit_SSD1306.SSD1306_128_64):
     def __init__(self):
-        # logging.info("Setting up display")
+        logging.info("Setting up display")
 
         # Set up the display library, clear it and set the font
         super().__init__(rst=None)
@@ -96,7 +96,7 @@ class SoundLock(threading.Thread):
         self.display.draw_position(angle)
         self.display.draw_text(sound_name)
         self.display.update()
-        # logging.debug(f"Sound: {sound_name} was displayed at {angle} degrees")
+        logging.debug(f"Sound: {sound_name} was displayed at {angle} degrees")
 
     def update_sound(self, angle, sound_name=''):
         self.sound_queue.put({'angle': angle, 'name': sound_name})
@@ -118,7 +118,7 @@ class SoundLock(threading.Thread):
         return self._current_sound
 
     def run(self):
-        # logging.info("Sound lock thread started")
+        logging.info("Sound lock thread started")
 
         start_time = time.time()
         while not self.stopped:
@@ -130,7 +130,7 @@ class SoundLock(threading.Thread):
 
             # Reset relative orientation if sound changes/new sound angle of arrival is available
             if self.sound_changed:
-                # logging.debug("New sound angle available, zeroing relative orientation")
+                logging.info(f"New sound {curr_sound['name']} available. Zeroing relative orientation")
                 self.reset_rel_orientation()
 
             # Displays sound relative to where the user is looking
@@ -154,8 +154,6 @@ class SoundLock(threading.Thread):
         self.rel_orientation += differentialAngle
         self.rel_orientation = self.rel_orientation
 
-        # # logging.debug(
-        #     f"Absolute orientation: {self.abs_orientation} -- Relative orientation: {self.rel_orientation}")
         return (new_start_time, differentialAngle)
 
     def reset_rel_orientation(self):

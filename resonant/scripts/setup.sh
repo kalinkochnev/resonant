@@ -21,6 +21,7 @@ REQUIRED_PACKAGES=(
 
 # ALSO
 # Change the i2c speed so the display/gyro refreshes faster
+# See https://www.raspberrypi-spy.co.uk/2014/11/enabling-the-i2c-interface-on-the-raspberry-pi/
 # See https://www.raspberrypi-spy.co.uk/2018/02/change-raspberry-pi-i2c-bus-speed/
 
 function checkOrInstall() {
