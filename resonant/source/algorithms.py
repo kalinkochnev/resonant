@@ -62,58 +62,58 @@ class SourceLocalization(Algorithm):
         self.srcs: List[Source] = []
         self.poten_srcs: List[Source] = []
 
-def run_algorithm(self):
-    def get_ratio(m1, m2):
+    def run_algorithm(self):
+        def get_ratio(m1, m2):
 
-        index_delay = fft_crosscorr(
-            m1.signal, m2.signal).argmax() - len(m1.signal) / 2
-        confidence = np.real(fft_crosscorr(m1.signal, m2.signal).max())
-        ratio = resonant.V_SOUND * index_delay / \
-            (resonant.AUDIO_SAMPLING_RATE * resonant.MIC_SPACING * math.sqrt(2))
-        ratio = np.clip(ratio, -1, 1)
-        return ratio, confidence
+            index_delay = fft_crosscorr(
+                m1.signal, m2.signal).argmax() - len(m1.signal) / 2
+            confidence = np.real(fft_crosscorr(m1.signal, m2.signal).max())
+            ratio = resonant.V_SOUND * index_delay / \
+                (resonant.AUDIO_SAMPLING_RATE * resonant.MIC_SPACING * math.sqrt(2))
+            ratio = np.clip(ratio, -1, 1)
+            return ratio, confidence
 
-    def ave_angle(a1, a2):
-        if (a1 < 90 and a2 > 270):
-            a1 -= 360
-        if (a2 < 90 and a1 > 270):
-            a2 -= 360
-        ave = (a1 + a2) / 2
-        if (ave < 0):
-            ave += 360
-        return ave
+        def ave_angle(a1, a2):
+            if (a1 < 90 and a2 > 270):
+                a1 -= 360
+            if (a2 < 90 and a1 > 270):
+                a2 -= 360
+            ave = (a1 + a2) / 2
+            if (ave < 0):
+                ave += 360
+            return ave
 
-    r1, c1 = get_ratio(self.microphones[0], self.microphones[2])
-    r2, c2 = get_ratio(self.microphones[1], self.microphones[3])
+        r1, c1 = get_ratio(self.microphones[0], self.microphones[2])
+        r2, c2 = get_ratio(self.microphones[1], self.microphones[3])
 
-    confidence = c1 * c2
+        confidence = c1 * c2
 
-    if (r1 >= 0 and r2 >= 0):
-        angle1 = -math.acos(r1) * (180/math.pi) + 225
-        angle2 = math.acos(r2) * (180/math.pi) + 135
-    elif (r1 <= 0 and r2 <= 0):
-        angle1 = math.acos(r1) * (180/math.pi) - 135
-        angle2 = -math.acos(r2) * (180/math.pi) + 135
-    elif (r1 > 0 and r2 < 0):
-        angle1 = math.acos(r1) * (180/math.pi) - 135
-        angle2 = math.acos(r2) * (180/math.pi) + 135
-    elif (r1 < 0 and r2 > 0):
-        angle1 = -math.acos(r1) * (180/math.pi) + 225
-        angle2 = -math.acos(r2) * (180/math.pi) + 135
+        if (r1 >= 0 and r2 >= 0):
+            angle1 = -math.acos(r1) * (180/math.pi) + 225
+            angle2 = math.acos(r2) * (180/math.pi) + 135
+        elif (r1 <= 0 and r2 <= 0):
+            angle1 = math.acos(r1) * (180/math.pi) - 135
+            angle2 = -math.acos(r2) * (180/math.pi) + 135
+        elif (r1 > 0 and r2 < 0):
+            angle1 = math.acos(r1) * (180/math.pi) - 135
+            angle2 = math.acos(r2) * (180/math.pi) + 135
+        elif (r1 < 0 and r2 > 0):
+            angle1 = -math.acos(r1) * (180/math.pi) + 225
+            angle2 = -math.acos(r2) * (180/math.pi) + 135
 
-    if (angle1 < 0):
-        angle1 += 360
-    if (angle2 < 0):
-        angle2 += 360
+        if (angle1 < 0):
+            angle1 += 360
+        if (angle2 < 0):
+            angle2 += 360
 
-    ave_angle = ave_angle(angle1, angle2)
-    source = Source(ave_angle, self.microphones[0].signal)
-    # print(confidence)
-    if confidence > resonant.LOCALIZATION_CORRELATION_THRESHOLD:
-        print(ave_angle)
-        return source
-    else:
-        return None
+        ave_angle = ave_angle(angle1, angle2)
+        source = Source(ave_angle, self.microphones[0].signal)
+        # print(confidence)
+        if confidence > resonant.LOCALIZATION_CORRELATION_THRESHOLD:
+            print(ave_angle)
+            return source
+        else:
+            return None
 
     def should_recognize(self) -> bool:
         return self.microphones[0].audio.mean() < resonant

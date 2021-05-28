@@ -10,86 +10,88 @@ import scipy.io.wavfile
 import numpy as np
 
 from source.geometry import SphericalPt
-from source.hat import Display
+from source.hat import Hat
 from source.mic import Source
 
 
 class AudioClassifier:
-    MAPPING = {
-        0: 'air conditioner',
-        1: 'car horn',
-        2: 'children playing',
-        3: 'dog bark',
-        4: 'drilling',
-        5: 'engine idling',
-        6: 'gun shot',
-        7: 'jackhammer',
-        8: 'siren',
-        9: 'street music'
-    }
-
     def __init__(self):
-        print("Loading ML...")
-        self.interpreter = tflite.Interpreter(model_path='assets/model.tflite')
-        self.interpreter.allocate_tensors()
+        super().__init__()
+#     MAPPING = {
+#         0: 'air conditioner',
+#         1: 'car horn',
+#         2: 'children playing',
+#         3: 'dog bark',
+#         4: 'drilling',
+#         5: 'engine idling',
+#         6: 'gun shot',
+#         7: 'jackhammer',
+#         8: 'siren',
+#         9: 'street music'
+#     }
 
-        self.input_details = self.interpreter.get_input_details()
-        self.output_details = self.interpreter.get_output_details()
-        print("Finished loading ")
+#     def __init__(self):
+#         print("Loading ML...")
+#         self.interpreter = tflite.Interpreter(model_path='assets/model.tflite')
+#         self.interpreter.allocate_tensors()
 
-    def predict_sound(self, signal, n_mfcc=13, n_fft=2048, hop_length=512):
-        signal_raw = np.nan_to_num(signal).astype(np.int16)
-        scipy.io.wavfile.write("/run/shm/ml.wav", resonant.AUDIO_SAMPLING_RATE, signal_raw)
-        scipy.io.wavfile.write("ml.wav", resonant.AUDIO_SAMPLING_RATE, signal_raw)
-        signal, sr = load("/run/shm/ml.wav")
-        # n_bytes = 2 # the number of bytes per sample 
-        # fmt = "<i{:d}".format(n_bytes)
-        # scale = 1.0 / float(1 << ((8 * n_bytes) - 1))
-        # signal = scale * np.frombuffer(signal, fmt).astype(np.float32)
-        # signal = signal[:2262]
+#         self.input_details = self.interpreter.get_input_details()
+#         self.output_details = self.interpreter.get_output_details()
+#         print("Finished loading ")
 
-        # scipy.io.wavfile.write("ml.wav", resonant.SAMPLING_RATE, signal)
-        mfcc_data = mfcc(signal, resonant.ML_SAMPLING_RATE,
-                        n_fft=n_fft, n_mfcc=n_mfcc, hop_length=hop_length)
-        array = np.zeros((1, 2262))
-        sample_array = mfcc_data.T.flatten()
-        array[0, 0:sample_array.size] = sample_array
+#     def predict_sound(self, signal, n_mfcc=13, n_fft=2048, hop_length=512):
+#         signal_raw = np.nan_to_num(signal).astype(np.int16)
+#         scipy.io.wavfile.write("/run/shm/ml.wav", resonant.AUDIO_SAMPLING_RATE, signal_raw)
+#         scipy.io.wavfile.write("ml.wav", resonant.AUDIO_SAMPLING_RATE, signal_raw)
+#         signal, sr = load("/run/shm/ml.wav")
+#         # n_bytes = 2 # the number of bytes per sample 
+#         # fmt = "<i{:d}".format(n_bytes)
+#         # scale = 1.0 / float(1 << ((8 * n_bytes) - 1))
+#         # signal = scale * np.frombuffer(signal, fmt).astype(np.float32)
+#         # signal = signal[:2262]
 
-        # input_shape = input_details[0]['shape']
-        input_data = array
-        # scipy.io.wavfile.write("ml_f32.wav", resonant.SAMPLING_RATE, input_data)
-        input_data = input_data.astype("float32")
-        self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
+#         # scipy.io.wavfile.write("ml.wav", resonant.SAMPLING_RATE, signal)
+#         mfcc_data = mfcc(signal, resonant.ML_SAMPLING_RATE,
+#                         n_fft=n_fft, n_mfcc=n_mfcc, hop_length=hop_length)
+#         array = np.zeros((1, 2262))
+#         sample_array = mfcc_data.T.flatten()
+#         array[0, 0:sample_array.size] = sample_array
 
-        self.interpreter.invoke()
+#         # input_shape = input_details[0]['shape']
+#         input_data = array
+#         # scipy.io.wavfile.write("ml_f32.wav", resonant.SAMPLING_RATE, input_data)
+#         input_data = input_data.astype("float32")
+#         self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
 
-        output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
-        # time_elapsed_milliseconds = int((time.time() - start)*1000)
-        return output_data
+#         self.interpreter.invoke()
 
-    def analyze(self, source: Source) -> Source:
-        """This decides whether to mark a sound as conclusive or not"""
+#         output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
+#         # time_elapsed_milliseconds = int((time.time() - start)*1000)
+#         return output_data
 
-        """results = self.predict_sound(source.audio)
-        source.name = self.MAPPING[results.argmax()]
-        print(f"Sound: {source.name}  confidences: {results}")
-        return source"""
+#     def analyze(self, source: Source) -> Source:
+#         """This decides whether to mark a sound as conclusive or not"""
 
-        # if self.is_confident(results):
-        # return None
+#         """results = self.predict_sound(source.audio)
+#         source.name = self.MAPPING[results.argmax()]
+#         print(f"Sound: {source.name}  confidences: {results}")
+#         return source"""
 
-    def is_confident(self, ml_results: dict):
-        confidences: np.ndarray = np.array(ml_results.values())
-        def standardize(value): return (
-            value - confidences.mean())/confidences.std()
-        max_conf = max(confidences, key=ml_results.get)
-        return max_conf >= resonant.ML_CONF_THRESH
+#         # if self.is_confident(results):
+#         # return None
+
+#     def is_confident(self, ml_results: dict):
+#         confidences: np.ndarray = np.array(ml_results.values())
+#         def standardize(value): return (
+#             value - confidences.mean())/confidences.std()
+#         max_conf = max(confidences, key=ml_results.get)
+#         return max_conf >= resonant.ML_CONF_THRESH
 
 
 class SourceScheduler:
-    def __init__(self, ml: AudioClassifier):
+    def __init__(self, ml: AudioClassifier, hat: Hat):
         self.sources: List[Source] = []
-        self.hat = Display()
+        self.hat = hat
         self.ml = ml
 
     @property
@@ -107,7 +109,9 @@ class SourceScheduler:
 
         youngest: Source = self.max_life_src
         if youngest is not None:
-            self.hat.lock(youngest.position.polar, youngest.name)
+            # TODO self.hat.sound_lock.update_sound(youngest.position.polar, "test")
+            print(youngest.position.polar)
+            pass
 
     @property
     def max_life_src(self) -> Source:

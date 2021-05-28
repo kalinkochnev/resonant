@@ -10,7 +10,7 @@ REQUIRED_PACKAGES=(
     libssl-dev libatlas-base-dev # Numpy
     i2c-tools # imu
     libopenjp2-7 libtiff5 # Pillow
-    portaudio19-dev python3-pyaudio # libportaudio0 libportaudio2 libportaudiocpp0 libasound2-dev #Pyaudio
+    portaudio19-dev python3-pyaudio pulseaudio# libportaudio0 libportaudio2 libportaudiocpp0 libasound2-dev #Pyaudio
 )
 
 # IF YOU ARE RUNNING THIS ON A PI

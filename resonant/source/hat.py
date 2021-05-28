@@ -99,6 +99,7 @@ class SoundLock(threading.Thread):
         logging.debug(f"Sound: {sound_name} was displayed at {angle} degrees")
 
     def update_sound(self, angle, sound_name=''):
+        print(f"New sound sent: {angle} {sound_name}")
         self.sound_queue.put({'angle': angle, 'name': sound_name})
 
     @property
@@ -124,7 +125,7 @@ class SoundLock(threading.Thread):
         while not self.stopped:
             curr_sound = self.curr_sound
             start_time, diffAngle = self.integrate_gyro(start_time)
-            print(f"Rel: {self.rel_orientation}  abs: {self.abs_orientation}")
+            # print(f"Rel: {self.rel_orientation}  abs: {self.abs_orientation}")
             if curr_sound is None:
                 continue
 

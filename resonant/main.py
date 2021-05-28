@@ -23,12 +23,15 @@ if __name__ == "__main__":
 
     # Init resources
     ml = AudioClassifier()
+
     hat = Hat()
-    localizer = SourceLocalization(AudioIter.initialize_mics())
-    live_audio = RealtimeAudio()
-    src_scheduler = SourceScheduler(ml)
-    
     hat.sound_lock.start()
+    hat.sound_lock.update_sound(0, "test")
+
+
+    localizer = SourceLocalization(AudioIter.initialize_mics())
+    live_audio = RealtimeAudio(audio_device=0)
+    src_scheduler = SourceScheduler(ml, None)
 
     signal = np.zeros(resonant.MAX_ML_SAMPLES)
     for channels in live_audio:

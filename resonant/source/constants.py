@@ -3,6 +3,9 @@ import pyaudio
 import source.geometry as geom
 
 ON_RP4 = True
+# Misc
+V_SOUND = 338 # m/s
+
 
 # DEVICE SPECIFICATIONS
 MIC_SPACING = 0.062  # meters
