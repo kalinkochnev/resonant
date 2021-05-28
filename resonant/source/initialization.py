@@ -9,6 +9,7 @@ import scipy.io.wavfile as wav
 import source.constants as resonant
 from source.mic import Mic
 from utils.arr import push_array
+from source.threading import I2CLock
 
 
 class AudioIter:
@@ -103,16 +104,24 @@ class StreamProcessor:
         for chan, new_audio in zip(self.audio_channels, channels):
             push_array(new_audio, chan, resonant.FULL_WINDOW)
 
+
 class RealtimeAudio(StreamProcessor):
-    def __init__(self, audio_device=None):
+    def __init__(self, locks: I2CLock, audio_device=None):
         super().__init__()
+        self.locks = locks
         self.pyaudio = pyaudio.PyAudio()
+        self.acquire_stream(audio_device)
+
+    def acquire_stream(self, audio_device):
         if audio_device is None:
             audio_device = self.choose_audio_device()
+
+        self.locks.read.acquire()
         self.stream = self.pyaudio.open(format=resonant.AUDIO_FORMAT, channels=resonant.NUM_MICS,
                                         rate=resonant.AUDIO_SAMPLING_RATE, input=True,
                                         frames_per_buffer=resonant.AUDIO_FRAME_SIZE,
-                                        stream_callback=self.stream_reader(), input_device_index=audio_device)
+                                        input_device_index=audio_device)
+        self.locks.read.release()
 
     def choose_audio_device(self):
         info = self.pyaudio.get_host_api_info_by_index(0)
@@ -123,21 +132,38 @@ class RealtimeAudio(StreamProcessor):
                       self.pyaudio.get_device_info_by_host_api_device_index(0, i).get('name'))
         return int(input("What input id do you choose? "))
 
-    def stream_reader(self):
-        def reader(in_data, frame_count, time_info, status):
-            new_data = np.frombuffer(in_data, dtype=np.int16)
-            # Removes items from back of queue if it fills up
-            if self.audio_queue.qsize() >= self.audio_queue.maxsize:
-                self.audio_queue.get()
-            self.audio_queue.put((new_data))
+    def _read_stream_available(self):
+        pass
+        # lock.acquire()
+        # samples = stream.read(available)
+        # print(f"{len(samples)} ----------------")
 
-            return (in_data, pyaudio.paContinue)
-        return reader
+        # audio_data.append(samples)
+        # lock.release()
+
+    def stream_reader(self):
+        samples_avail = self.stream.get_read_available()
+        if samples_avail == 0:
+            return
+
+        # Acquires i2c lock and reads the audio stream
+        self.locks.read.acquire()
+        mic_bytes = self.stream.read(samples_avail)
+        self.locks.read.release()
+
+        new_data = np.frombuffer(mic_bytes, dtype=np.int16)
+
+        # Removes items from back of queue if it fills up
+        if self.audio_queue.qsize() >= self.audio_queue.maxsize:
+            self.audio_queue.get()
+
+        self.audio_queue.put(new_data)
 
     def __iter__(self):
         self.stream.start_stream()
         return self
 
     def __next__(self):
+        self.stream_reader()
         self.cycle_channels(self.flatten_queue())
         return self.audio_channels

@@ -109,9 +109,7 @@ class SourceScheduler:
 
         youngest: Source = self.max_life_src
         if youngest is not None:
-            # TODO self.hat.sound_lock.update_sound(youngest.position.polar, "test")
-            print(youngest.position.polar)
-            pass
+            self.hat.sound_lock.update_sound(youngest.position.polar, "test")
 
     @property
     def max_life_src(self) -> Source:
