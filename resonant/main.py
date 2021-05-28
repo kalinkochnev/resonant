@@ -37,7 +37,8 @@ def program():
     live_audio = RealtimeAudio(i2c_locks, audio_device=0)
     for channels in live_audio:
         localizer.update_signals(channels)
-        src = localizer.run_algorithm() # TODO something is causing this to hang 
+        src = localizer.run_algorithm()
+        print(src)
         src_scheduler.ingest(src)
 
     live_audio.stream.stop_stream()

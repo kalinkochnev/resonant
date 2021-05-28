@@ -108,9 +108,7 @@ class SourceLocalization(Algorithm):
 
         ave_angle = ave_angle(angle1, angle2)
         source = Source(ave_angle, self.microphones[0].signal)
-        # print(confidence)
         if confidence > resonant.LOCALIZATION_CORRELATION_THRESHOLD:
-            print(ave_angle)
             return source
         else:
             return None

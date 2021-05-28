@@ -10,7 +10,7 @@ import source.constants as resonant
 from source.mic import Mic
 from utils.arr import push_array
 from source.threading import I2CLock
-
+import time
 
 class AudioIter:
     """An iterator interface that returns audio based on a window size"""
@@ -135,13 +135,12 @@ class RealtimeAudio(StreamProcessor):
     def stream_reader(self):
         samples_avail = self.stream.get_read_available()
 
-        if samples_avail == 0:
-            return
+        while samples_avail == 0:
+            samples_avail = self.stream.get_read_available()
 
         # Acquires i2c lock and reads the audio stream
         self.locks.read.acquire()
-        mic_bytes = self.stream.read(samples_avail)
-        print(samples_avail)
+        mic_bytes = self.stream.read(samples_avail, exception_on_overflow=False)
         self.locks.read.release()
 
 
