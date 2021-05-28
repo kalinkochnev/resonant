@@ -112,7 +112,7 @@ class RealtimeAudio(StreamProcessor):
         self.stream = self.pyaudio.open(format=resonant.AUDIO_FORMAT, channels=resonant.NUM_MICS,
                                         rate=resonant.AUDIO_SAMPLING_RATE, input=True,
                                         frames_per_buffer=resonant.AUDIO_FRAME_SIZE,
-                                        stream_callback=self.stream_reader())
+                                        stream_callback=self.stream_reader(), input_device_index=audio_device)
 
     def choose_audio_device(self):
         info = self.pyaudio.get_host_api_info_by_index(0)
