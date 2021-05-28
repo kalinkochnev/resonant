@@ -21,7 +21,7 @@ IMU_ANGLE_OFFSET = 90
 # AUDIO SETTINGS
 AUDIO_INTERPOLATION = 0 # 0 means no interpolation, 1 means one additional index for each amplitude
 AUDIO_FORMAT = pyaudio.paInt16
-AUDIO_FRAME_SIZE = 1000 # We assume that there are this many samples for each microphone for the reading
+AUDIO_FRAME_SIZE = 2000 # We assume that there are this many samples for each microphone for the reading
 AUDIO_SAMPLING_RATE = 44100  #  # of samples taken per second for each channel
 FULL_WINDOW = 4 * AUDIO_SAMPLING_RATE #  # of seconds times sampling rate. Max number of samples to keep in memory
 

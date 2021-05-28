@@ -132,27 +132,20 @@ class RealtimeAudio(StreamProcessor):
                       self.pyaudio.get_device_info_by_host_api_device_index(0, i).get('name'))
         return int(input("What input id do you choose? "))
 
-    def _read_stream_available(self):
-        pass
-        # lock.acquire()
-        # samples = stream.read(available)
-        # print(f"{len(samples)} ----------------")
-
-        # audio_data.append(samples)
-        # lock.release()
-
     def stream_reader(self):
         samples_avail = self.stream.get_read_available()
+
         if samples_avail == 0:
             return
 
         # Acquires i2c lock and reads the audio stream
         self.locks.read.acquire()
         mic_bytes = self.stream.read(samples_avail)
+        print(samples_avail)
         self.locks.read.release()
 
-        new_data = np.frombuffer(mic_bytes, dtype=np.int16)
 
+        new_data = np.frombuffer(mic_bytes, dtype=np.int16)
         # Removes items from back of queue if it fills up
         if self.audio_queue.qsize() >= self.audio_queue.maxsize:
             self.audio_queue.get()

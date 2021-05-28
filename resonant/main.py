@@ -20,28 +20,29 @@ from utils.arr import push_array
 def setup_logging():
     logging.basicConfig(filename="log.txt", filemode="w+", level=logging.INFO)
 
-
-if __name__ == "__main__":
+def program():
     setup_logging()
     i2c_locks = I2CLock()
 
     # Init resources 
     ml = AudioClassifier()
-    live_audio = RealtimeAudio(i2c_locks, audio_device=0)
 
     hat = Hat(i2c_locks)
     hat.sound_lock.start()
     hat.sound_lock.update_sound(90, "test")
 
     localizer = SourceLocalization(AudioIter.initialize_mics())
-    src_scheduler = SourceScheduler(ml, None)
+    src_scheduler = SourceScheduler(ml, hat)
 
-    signal = np.zeros(resonant.MAX_ML_SAMPLES)
+    live_audio = RealtimeAudio(i2c_locks, audio_device=0)
     for channels in live_audio:
         localizer.update_signals(channels)
-        src = localizer.run_algorithm()
+        src = localizer.run_algorithm() # TODO something is causing this to hang 
         src_scheduler.ingest(src)
 
     live_audio.stream.stop_stream()
     live_audio.stream.close()
     live_audio.pyaudio.terminate()
+
+if __name__ == "__main__":
+    program()
