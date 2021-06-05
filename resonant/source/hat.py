@@ -62,7 +62,7 @@ class SoundLock(threading.Thread):
 
             # Reset relative orientation if sound changes/new sound angle of arrival is available
             if self.sound_changed:
-                logging.info(f"New sound {curr_sound['name']} available. Zeroing relative orientation")
+                logging.debug(f"New sound {curr_sound['name']} available. Zeroing relative orientation")
                 self.reset_rel_orientation()
 
             # Displays sound relative to where the user is looking

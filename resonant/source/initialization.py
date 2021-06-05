@@ -1,16 +1,18 @@
 import math
+import threading
+import time
 from queue import LifoQueue, Queue
 from typing import List
 
 import numpy as np
 import pyaudio
 import scipy.io.wavfile as wav
+from utils.arr import push_array
 
 import source.constants as resonant
 from source.mic import Mic
-from utils.arr import push_array
 from source.threading import I2CLock
-import time
+
 
 class AudioIter:
     """An iterator interface that returns audio based on a window size"""
@@ -112,6 +114,8 @@ class RealtimeAudio(StreamProcessor):
         self.pyaudio = pyaudio.PyAudio()
         self.acquire_stream(audio_device)
 
+        self.stream.start_stream()
+
     def acquire_stream(self, audio_device):
         if audio_device is None:
             audio_device = self.choose_audio_device()
@@ -135,14 +139,15 @@ class RealtimeAudio(StreamProcessor):
     def stream_reader(self):
         samples_avail = self.stream.get_read_available()
 
-        while samples_avail == 0:
+        while samples_avail < resonant.AUDIO_FRAME_SIZE:
             samples_avail = self.stream.get_read_available()
 
+        assert samples_avail != 0
         # Acquires i2c lock and reads the audio stream
         self.locks.read.acquire()
         mic_bytes = self.stream.read(samples_avail, exception_on_overflow=False)
-        self.locks.read.release()
 
+        self.locks.read.release()
 
         new_data = np.frombuffer(mic_bytes, dtype=np.int16)
         # Removes items from back of queue if it fills up
@@ -152,7 +157,6 @@ class RealtimeAudio(StreamProcessor):
         self.audio_queue.put(new_data)
 
     def __iter__(self):
-        self.stream.start_stream()
         return self
 
     def __next__(self):

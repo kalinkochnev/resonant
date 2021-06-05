@@ -13,12 +13,15 @@ from source.hat import IMU, Hat
 from source.initialization import AudioIter, OfflineAudioIter, RealtimeAudio
 from source.mic import Source
 from source.ml import AudioClassifier, SourceScheduler
-from source.threading import I2CLock
+from source.threads import I2CLock
 from utils.arr import push_array
-
+from multiprocessing import Pool, Process
 
 def setup_logging():
     logging.basicConfig(filename="log.txt", filemode="w+", level=logging.INFO)
+
+def f(x):
+    return x**2
 
 def program():
     setup_logging()
@@ -35,11 +38,13 @@ def program():
     src_scheduler = SourceScheduler(ml, hat)
 
     live_audio = RealtimeAudio(i2c_locks, audio_device=0)
-    for channels in live_audio:
-        localizer.update_signals(channels)
-        src = localizer.run_algorithm()
-        print(src)
-        src_scheduler.ingest(src)
+    p = Process()
+    with Pool(1) as pool:
+        for channels in live_audio:
+            localizer.update_signals(channels)
+            result = pool.map(SourceLocalization.run_algorithm, [localizer.microphones])
+            print(result[0])
+            src_scheduler.ingest(result[0])
 
     live_audio.stream.stop_stream()
     live_audio.stream.close()

@@ -110,7 +110,7 @@ class SourceScheduler:
         youngest: Source = self.max_life_src
         if youngest is not None:
             print(f"Sound at: {youngest.position.polar} degrees")
-            self.hat.sound_lock.update_sound(youngest.position.polar + resonant.IMU_ANGLE_OFFSET, "actual audio")
+            self.hat.sound_lock.update_sound((youngest.position.polar + resonant.IMU_ANGLE_OFFSET) % 360, "actual audio")
 
     @property
     def max_life_src(self) -> Source:

@@ -1,4 +1,5 @@
 import math
+import multiprocessing
 from typing import List
 
 import numpy as np
@@ -62,9 +63,9 @@ class SourceLocalization(Algorithm):
         self.srcs: List[Source] = []
         self.poten_srcs: List[Source] = []
 
-    def run_algorithm(self):
+    @classmethod
+    def run_algorithm(cls, microphones: List[Mic]):
         def get_ratio(m1, m2):
-
             index_delay = fft_crosscorr(
                 m1.signal, m2.signal).argmax() - len(m1.signal) / 2
             confidence = np.real(fft_crosscorr(m1.signal, m2.signal).max())
@@ -83,8 +84,8 @@ class SourceLocalization(Algorithm):
                 ave += 360
             return ave
 
-        r1, c1 = get_ratio(self.microphones[0], self.microphones[2])
-        r2, c2 = get_ratio(self.microphones[1], self.microphones[3])
+        r1, c1 = get_ratio(microphones[0], microphones[2])
+        r2, c2 = get_ratio(microphones[1], microphones[3])
 
         confidence = c1 * c2
 
@@ -107,7 +108,7 @@ class SourceLocalization(Algorithm):
             angle2 += 360
 
         ave_angle = ave_angle(angle1, angle2)
-        source = Source(ave_angle, self.microphones[0].signal)
+        source = Source(ave_angle, microphones[0].signal)
         if confidence > resonant.LOCALIZATION_CORRELATION_THRESHOLD:
             return source
         else:
@@ -119,5 +120,5 @@ class SourceLocalization(Algorithm):
     def update_signals(self, channels):
         # Use smaller window
         shrunk_signals = [
-            np.copy(channel[0:resonant.LOCALIZING_WINDOW]) for channel in channels]
+            np.copy(channel[-resonant.LOCALIZING_WINDOW:]) for channel in channels]
         return super().update_signals(shrunk_signals)

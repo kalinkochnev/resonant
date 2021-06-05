@@ -16,7 +16,7 @@ MIC_POSITIONS = [
     geom.SphericalPt(MIC_SPACING * math.sqrt(2), 1 * math.pi /4, 0),
     geom.SphericalPt(MIC_SPACING * math.sqrt(2), 7 * math.pi /4, 0),
 ]
-IMU_ANGLE_OFFSET = 0
+IMU_ANGLE_OFFSET = 90
 
 # AUDIO SETTINGS
 AUDIO_INTERPOLATION = 0 # 0 means no interpolation, 1 means one additional index for each amplitude
