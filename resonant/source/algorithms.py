@@ -110,7 +110,7 @@ class SourceLocalization(Algorithm):
             angle2 += 360
 
         ave_angle = ave_angle(angle1, angle2)
-        source = Source(ave_angle, microphones[0].signal)
+        source = Source((ave_angle + resonant.ANGLE_OFFSET) % 360, microphones[0].signal)
         logging.debug(f"Calculated source: {source}")
         if confidence > resonant.LOCALIZATION_CORRELATION_THRESHOLD:
             return source

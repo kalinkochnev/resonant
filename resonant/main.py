@@ -38,11 +38,10 @@ def program():
     
     # Starting threads
 
-    with Pool(5) as pool:
+    with Pool(1) as pool:
         for channels in live_audio:
             localizer.update_signals(channels)
             result = pool.map(SourceLocalization.run_algorithm, [localizer.microphones])
-            if result is not None: print(result[0])
             src_scheduler.ingest(result[0])
 
     live_audio.stream.stop_stream()
