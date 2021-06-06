@@ -6,7 +6,7 @@ import smbus
 from imusensor.MPU9250 import MPU9250
 from PIL import Image, ImageDraw, ImageFont
 
-from source.threading import I2CLock
+from source.threads import I2CLock
 
 
 class I2CDevice:
@@ -51,6 +51,10 @@ class Display(Adafruit_SSD1306.SSD1306_128_64):
         self.ellipsis_height = self.height-self.padding - 20
 
         self.locks = locks
+
+    def __del__(self):
+        self.clear_buffer()
+        self.clear()
 
     def clear_buffer(self):
         """Draws a black rectangle to clear the image that is drawn to the screen"""

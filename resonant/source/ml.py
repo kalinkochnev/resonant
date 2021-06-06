@@ -1,12 +1,13 @@
 from queue import Queue
 from typing import Iterable, List
+import logging
 
 import source.constants as resonant
 
-if resonant.ON_RP4:
-    import tflite_runtime.interpreter as tflite
+# if resonant.ON_RP4:
+#     import tflite_runtime.interpreter as tflite
 
-import scipy.io.wavfile
+# import scipy.io.wavfile
 import numpy as np
 
 from source.geometry import SphericalPt
@@ -109,7 +110,7 @@ class SourceScheduler:
 
         youngest: Source = self.max_life_src
         if youngest is not None:
-            print(f"Sound at: {youngest.position.polar} degrees")
+            logging.debug(f"Ingested sound at {(youngest.position.polar + resonant.IMU_ANGLE_OFFSET) % 360} degrees")
             self.hat.sound_lock.update_sound((youngest.position.polar + resonant.IMU_ANGLE_OFFSET) % 360, "actual audio")
 
     @property
@@ -123,8 +124,11 @@ class SourceScheduler:
     def update_equiv_src(self, new_src: Source):
         """"If the new source is within the margin of an old source, add its audio to the old source and
         analyze with ML"""
+        logging.debug(f"Updating equivalent source...")
         for src in self.sources:
             if src.position.within_margin(resonant.SOURCE_MARGIN, new_src.position):
+                logging.debug(f"New source ({new_src}) within margin of old source ({src})... updating")
+
                 src.update_audio(new_src.audio[:resonant.LOCALIZING_WINDOW])
                 src.position = new_src.position
 
@@ -141,6 +145,7 @@ class SourceScheduler:
         # If there are no equivalent sources, add it to the tracked sources
         new_src.track()
         self.sources.append(new_src)
+        logging.debug(f"No matching source to new source ({new_src}). Adding to tracked sources.")
 
     def filter_srcs(self, new_src: Source):
         # Decrease cycles for all items in array and removes expired
@@ -150,6 +155,7 @@ class SourceScheduler:
 
             src.decrease_life()
             if src.is_expired:
+                logging.debug(f"Source {src} expired. Removing from tracked")
                 self.sources.remove(src)
                 continue
 

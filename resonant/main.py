@@ -1,6 +1,7 @@
 # import logging
 import logging
 import time
+from multiprocessing import Pool, Process
 from threading import Lock, Thread
 
 import numpy as np
@@ -15,13 +16,10 @@ from source.mic import Source
 from source.ml import AudioClassifier, SourceScheduler
 from source.threads import I2CLock
 from utils.arr import push_array
-from multiprocessing import Pool, Process
+
 
 def setup_logging():
-    logging.basicConfig(filename="log.txt", filemode="w+", level=logging.INFO)
-
-def f(x):
-    return x**2
+    logging.basicConfig(filename="log.txt", filemode="w", level=logging.DEBUG)
 
 def program():
     setup_logging()
@@ -29,7 +27,6 @@ def program():
 
     # Init resources 
     ml = AudioClassifier()
-
     hat = Hat(i2c_locks)
     hat.sound_lock.start()
     hat.sound_lock.update_sound(90, "test")
@@ -38,12 +35,14 @@ def program():
     src_scheduler = SourceScheduler(ml, hat)
 
     live_audio = RealtimeAudio(i2c_locks, audio_device=0)
-    p = Process()
-    with Pool(1) as pool:
+    
+    # Starting threads
+
+    with Pool(5) as pool:
         for channels in live_audio:
             localizer.update_signals(channels)
             result = pool.map(SourceLocalization.run_algorithm, [localizer.microphones])
-            print(result[0])
+            if result is not None: print(result[0])
             src_scheduler.ingest(result[0])
 
     live_audio.stream.stop_stream()

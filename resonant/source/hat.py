@@ -4,7 +4,7 @@ import time
 import threading
 import source.constants as resonant
 from source.devices import Display, IMU
-from source.threading import I2CLock
+from source.threads import I2CLock
 import logging
 
 class SoundLock(threading.Thread):
@@ -27,10 +27,12 @@ class SoundLock(threading.Thread):
         self.display.draw_position(angle)
         self.display.draw_text(sound_name)
         self.display.update()
-        logging.debug(f"Sound: {sound_name} was displayed at {angle} degrees")
+        logging.debug(f"Displaying sound {sound_name} at {angle} degrees")
 
     def update_sound(self, angle, sound_name=''):
-        print(f"New sound sent: {angle} {sound_name}")
+        logging.debug(f"New sound sent: {angle} {sound_name}")
+        logging.debug(f"Current Orientation---- relative: {self.rel_orientation}  absolute: {self.abs_orientation}")
+
         self.sound_queue.put({'angle': angle, 'name': sound_name})
 
     @property
@@ -56,7 +58,7 @@ class SoundLock(threading.Thread):
         while not self.stopped:
             curr_sound = self.curr_sound
             start_time, diffAngle = self.integrate_gyro(start_time)
-            # print(f"Rel: {self.rel_orientation}  abs: {self.abs_orientation}")
+
             if curr_sound is None:
                 continue
 

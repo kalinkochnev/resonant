@@ -1,5 +1,5 @@
+import logging
 import math
-import multiprocessing
 from typing import List
 
 import numpy as np
@@ -65,6 +65,7 @@ class SourceLocalization(Algorithm):
 
     @classmethod
     def run_algorithm(cls, microphones: List[Mic]):
+        logging.debug("Localization algorithm started")
         def get_ratio(m1, m2):
             index_delay = fft_crosscorr(
                 m1.signal, m2.signal).argmax() - len(m1.signal) / 2
@@ -88,6 +89,7 @@ class SourceLocalization(Algorithm):
         r2, c2 = get_ratio(microphones[1], microphones[3])
 
         confidence = c1 * c2
+        logging.debug(f"Localization confidence: {confidence/resonant.LOCALIZATION_CORRELATION_THRESHOLD}")
 
         if (r1 >= 0 and r2 >= 0):
             angle1 = -math.acos(r1) * (180/math.pi) + 225
@@ -109,6 +111,7 @@ class SourceLocalization(Algorithm):
 
         ave_angle = ave_angle(angle1, angle2)
         source = Source(ave_angle, microphones[0].signal)
+        logging.debug(f"Calculated source: {source}")
         if confidence > resonant.LOCALIZATION_CORRELATION_THRESHOLD:
             return source
         else:
