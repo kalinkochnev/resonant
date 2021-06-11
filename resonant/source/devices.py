@@ -7,7 +7,7 @@ from imusensor.MPU9250 import MPU9250
 from PIL import Image, ImageDraw, ImageFont
 
 from source.threads import I2CLock
-
+from utils.decorators import log_execution
 
 class I2CDevice:
     def __init__(self, locks: I2CLock):
@@ -25,6 +25,7 @@ class IMU(MPU9250.MPU9250):
         logging.info("Calibrating imu")
         self.begin()
 
+    @log_execution()
     def readSensor(self):
         self.locks.read.acquire()
         super().readSensor()
@@ -85,7 +86,12 @@ class Display(Adafruit_SSD1306.SSD1306_128_64):
                             2) + (self.height-20)/2
         self.drawer.ellipse((x-5, y-5, x+5, y+5), outline=255, fill=1)
 
+    @log_execution("Screen update")
     def update(self):
         imageRotated = self.pixel_buffer.rotate(180)
+        # self.locks.read.acquire()
+
         self.image(imageRotated)
         self.display()
+        # self.locks.read.release()
+

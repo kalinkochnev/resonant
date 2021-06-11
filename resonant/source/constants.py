@@ -28,7 +28,7 @@ FULL_WINDOW = 4 * AUDIO_SAMPLING_RATE #  # of seconds times sampling rate. Max n
 # The number of cycles for a sound to undergo localization/ML before disappearing it 
 CYCLES_TO_LIVE = 6
 CYCLES_INCONCLUSIVE = 3
-SOURCE_MARGIN = geom.SphericalPt.angle_only(10) # Criteria to determine if a source falls within an existing source 
+SOURCE_MARGIN = geom.SphericalPt.angle_only(8) # Criteria to determine if a source falls within an existing source 
 
 # MACHINE LEARNING
 MIN_ML_SAMPLES, MAX_ML_SAMPLES = (0.5 * AUDIO_SAMPLING_RATE, 4 * AUDIO_SAMPLING_RATE) # The minimum number of samples to machine learn on, maximum allowed

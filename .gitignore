@@ -134,3 +134,4 @@ test.gif
 # Pycharm ignore
 .idea/
 resonant/assets/model.tflite
+resonant/source/algorithms.py

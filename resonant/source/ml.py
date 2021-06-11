@@ -105,13 +105,16 @@ class SourceScheduler:
 
     def ingest(self, unidentifed: Source):
         if unidentifed is not None:
+            print(unidentifed)
             self.update_equiv_src(unidentifed)
         self.filter_srcs(unidentifed)
 
         youngest: Source = self.max_life_src
         if youngest is not None:
-
             self.hat.sound_lock.update_sound(youngest.position.polar, "actual audio")
+        else:
+            self.hat.sound_lock.update_sound(None)
+            
 
     @property
     def max_life_src(self) -> Source:

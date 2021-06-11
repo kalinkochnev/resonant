@@ -9,7 +9,7 @@ from utils.math import fft_crosscorr
 import source.constants as resonant
 from source.geometry import SphericalPt
 from source.mic import Mic, Source
-
+from utils.decorators import log_execution
 
 class Algorithm:  # Abstract class to implement algorithms:
     def __init__(self, microphones):
@@ -63,9 +63,10 @@ class SourceLocalization(Algorithm):
         self.srcs: List[Source] = []
         self.poten_srcs: List[Source] = []
 
+
     @classmethod
+    @log_execution("Localization")
     def run_algorithm(cls, microphones: List[Mic]):
-        logging.debug("Localization algorithm started")
         def get_ratio(m1, m2):
             index_delay = fft_crosscorr(
                 m1.signal, m2.signal).argmax() - len(m1.signal) / 2
@@ -112,9 +113,13 @@ class SourceLocalization(Algorithm):
         ave_angle = ave_angle(angle1, angle2)
         source = Source((ave_angle + resonant.ANGLE_OFFSET) % 360, microphones[0].signal)
         logging.debug(f"Calculated source: {source}")
-        if confidence > resonant.LOCALIZATION_CORRELATION_THRESHOLD:
+        print(f"Calculated source: {source} Localization confidence: {confidence}")
+
+
+        if confidence >= resonant.LOCALIZATION_CORRELATION_THRESHOLD:
             return source
         else:
+            print('Source ignored')
             return None
 
     def should_recognize(self) -> bool:
@@ -123,5 +128,5 @@ class SourceLocalization(Algorithm):
     def update_signals(self, channels):
         # Use smaller window
         shrunk_signals = [
-            np.copy(channel[-resonant.LOCALIZING_WINDOW:]) for channel in channels]
+            np.copy(channel[0:resonant.LOCALIZING_WINDOW]) for channel in channels]
         return super().update_signals(shrunk_signals)

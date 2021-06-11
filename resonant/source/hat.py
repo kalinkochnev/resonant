@@ -24,7 +24,8 @@ class SoundLock(threading.Thread):
     def display_sound(self, angle, sound_name):
         self.display.clear_buffer()
         self.display.draw_ellipse()
-        self.display.draw_position(angle)
+        if angle is not None:
+            self.display.draw_position(angle)
         self.display.draw_text(sound_name)
         self.display.update()
         logging.debug(f"Displaying sound {sound_name} at {angle} degrees")
@@ -32,7 +33,8 @@ class SoundLock(threading.Thread):
     def update_sound(self, angle, sound_name=''):
         logging.debug(f"New sound sent: {angle} {sound_name}")
         logging.debug(f"Current Orientation---- relative: {self.rel_orientation}  absolute: {self.abs_orientation}")
-        
+        print(f"New sound sent: {angle} {sound_name}")
+
         self.sound_queue.put({'angle': angle, 'name': sound_name})
 
     @property
@@ -57,17 +59,20 @@ class SoundLock(threading.Thread):
         start_time = time.time()
         while not self.stopped:
             curr_sound = self.curr_sound
-            start_time, diffAngle = self.integrate_gyro(start_time)
+            # start_time, diffAngle = self.integrate_gyro(start_time)
+
 
             if curr_sound is None:
                 continue
 
-            if self.sound_changed:
-                logging.debug(f"New sound {curr_sound['name']} available")
+            # if self.sound_changed:
+            #     print("Sound changed")
+            #     logging.debug(f"New sound {curr_sound['name']} available")
+            #     self.reset_rel_orientation()
 
             # Displays sound relative to where the user is looking
-            print(f"{curr_sound['name']} -- - {(curr_sound['angle'] + self.rel_orientation) % 360}")
-            self.display_sound((curr_sound['angle'] + self.rel_orientation) % 360, curr_sound['name'])
+            # print(f"{curr_sound['name']} -- - {(curr_sound['angle'] + self.rel_orientation) % 360}")
+            self.display_sound(curr_sound['angle'], curr_sound['name'])
 
     def stop(self):
         self.stopped = True

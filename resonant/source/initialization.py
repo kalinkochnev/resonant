@@ -13,7 +13,7 @@ import source.constants as resonant
 from source.mic import Mic
 from source.threads import I2CLock
 import logging
-
+from utils.decorators import log_execution
 class AudioIter:
     """An iterator interface that returns audio based on a window size"""
 
@@ -108,14 +108,16 @@ class StreamProcessor:
             push_array(new_audio, chan, resonant.FULL_WINDOW)
 
 
-class RealtimeAudio(StreamProcessor):
+class RealtimeAudio(StreamProcessor, threading.Thread):
     def __init__(self, locks: I2CLock, audio_device=None):
         super().__init__()
+        threading.Thread.__init__(self)
         self.locks = locks
         self.pyaudio = pyaudio.PyAudio()
         self.acquire_stream(audio_device)
         self.stream.start_stream()
 
+    @log_execution()
     def acquire_stream(self, audio_device):
         logging.info(f"Initializing pyaudio resources")
         if audio_device is None:
@@ -138,15 +140,20 @@ class RealtimeAudio(StreamProcessor):
                       self.pyaudio.get_device_info_by_host_api_device_index(0, i).get('name'))
         return int(input("What input id do you choose? "))
 
+    def run(self):
+        while True:
+            self.stream_reader()
+    
+    @log_execution()
     def stream_reader(self):
         samples_avail = self.stream.get_read_available()
 
-        while samples_avail < resonant.AUDIO_FRAME_SIZE:
-            samples_avail = self.stream.get_read_available()
+        if samples_avail == 0:
+            return
 
-        assert samples_avail != 0
         # Acquires i2c lock and reads the audio stream
         self.locks.read.acquire()
+
         mic_bytes = self.stream.read(samples_avail, exception_on_overflow=False)
         logging.debug(f"{len(mic_bytes)} bytes were read from microphone")
         self.locks.read.release()
@@ -162,8 +169,7 @@ class RealtimeAudio(StreamProcessor):
     def __iter__(self):
         return self
 
+    @log_execution("Main loop")
     def __next__(self):
-        self.stream_reader()
         self.cycle_channels(self.flatten_queue())
-        logging.debug(f"Next iteration of main loop run started...")
         return self.audio_channels
