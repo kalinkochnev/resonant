@@ -57,43 +57,10 @@ def program():
         if live_audio.audio_queue.empty():
             continue
 
-        # if not live_audio.updated:
-        #     to_remove = []
-        #     for j in jobs:
-        #         if not j.ready():
-        #             to_remove.append(j)
-        #         else:
-        #             j.get()
-        #             to_remove.append(j)
-        #             break
-
-        #     for j in to_remove:
-        #         jobs.remove(j)
-
-        #     continue
         localizer.update_signals(channels)
-        # print(localizer.microphones[0].signal)
 
-        start = time.time()
-        # result = pool.apply_async(SourceLocalization.run_algorithm, (localizer.microphones,), callback=display)
-        # jobs.append(result)
-        # time.sleep(0.25)
         result = SourceLocalization.run_algorithm(localizer.microphones)
-        # result = pool.apply(SourceLocalization.run_algorithm, (localizer.microphones,))
         src_scheduler.ingest(result)
-        # result = pool.map_async(artificial_load, [1500], callback=lambda x: print('load run'))
-        end = time.time()
-        print(f"Load took {round(end - start, 3)}")
-        # logging.debug(f"Load took {round(end - start, 3)}")
-        # result = pool.map(SourceLocalization.run_algorithm, [localizer.microphones])[0]
-        # print(result)
-
-        #
-
-    #         if curr_time - start_time >= 20:
-    #             break
-    # import scipy.io.wavfile as wavf
-    # wavf.write('capturedaudio.wav', round(resonant.AUDIO_SAMPLING_RATE), localizer.microphones[0].signal)
 
     live_audio.stream.stop_stream()
     live_audio.stream.close()
