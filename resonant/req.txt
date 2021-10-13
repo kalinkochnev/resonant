@@ -1,8 +1,0 @@
-
-numpy
-pyaudio
-scipy
-
-tflite_runtime
-adafruit-circuitpython-ssd1306
-pytest
