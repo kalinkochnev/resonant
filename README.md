@@ -11,16 +11,16 @@ In the realm of synthetic sensing, computer vision has been the predominant focu
 
 Three-dimensional sound localization, or the ability to identify the position of an audio source, is among the most important skills for an artificial hearing system. Combining localization with classification would allow such a device to gain complete understanding of the soundscape and navigate the world with new awareness.
 
-## Project Demo
-[![Project Demo](https://img.youtube.com/vi/GWMT6hhnRto/0.jpg)](http://www.youtube.com/watch?v=GWMT6hhnRto)
-
-
 ## Goals
-
 Through our research, we aimed to develop algorithms to both localize and classify sounds. They needed to be reasonably accurate while still being fast to compute, to achieve near real-time speeds.
 
 These algorithms would eventually be moved to an embedded platform within a wearable device. This wearable needed to be light-weight, unobtrusive and have a visual interface that is easy to understand.
 
+## Our Implementation
+We created a wearable and unobstrusive device built into a baseball cap that is easy to use and effective at identifying the origin of sounds in space in real time. Our devices uses a Raspberry Pi, an array of 4 microphones, an IMU, and a battery.
+
+## Project Demo
+[![Project Demo](https://img.youtube.com/vi/GWMT6hhnRto/0.jpg)](http://www.youtube.com/watch?v=GWMT6hhnRto)
 
 ## Abstract
 
