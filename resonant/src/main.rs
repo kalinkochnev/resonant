@@ -1,3 +1,5 @@
+mod lib;
+
 use std::io::Read;
 
 use alsa::{Direction, ValueOr};
@@ -56,18 +58,9 @@ fn live_playback() {
         assert_eq!(speak_io.writei(&mic_buf).unwrap(), 1024)
     }
 
+    mic_pcm.drop();
+    speak_pcm.drop();
     println!("this never ends");
-    // In case the buffer was larger than 2 seconds, start the stream manually.
-    if mic_pcm.state() != State::Running { mic_pcm.start().unwrap() };
-    // Wait for the stream to finish playback.
-    mic_pcm.drain().unwrap();// In case the buffer was larger than 2 seconds, start the stream manually.
-    
-    println!("this never ends");
-    if speak_pcm.state() != State::Running { speak_pcm.start().unwrap() };
-    // Wait for the stream to finish playback.
-    speak_pcm.drain().unwrap();
-    println!("this never ends");
-
 
 }
 
